@@ -1,6 +1,7 @@
 import React from 'react';
 import { EmptyState, Icon, LinhaLote, PageTitle } from '../components/UI.jsx';
-export default function Lotes({ lotes, eventos, pastos, navegar }) {
+export default function Lotes({ lotes, eventos, pastos: ativos, pastosHistorico = ativos, navegar }) {
+  const pastos = pastosHistorico;
   return <>
     <div className="head"><PageTitle icon="lotes">Lotes</PageTitle><button className="btn ghost sm" onClick={() => navegar('novoLote')}><Icon nome="novoLote" size={19} />Novo lote</button></div>
     <p className="sub subtitle">Saldo, potreiro e peso de cada lote.</p>

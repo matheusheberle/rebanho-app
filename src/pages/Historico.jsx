@@ -4,7 +4,7 @@ import { Chip, EmptyState, Icon, PageTitle } from '../components/UI.jsx';
 import { TIPOS, dataFormatada, nomePasto, numero } from '../lib/apresentacao.js';
 
 function descricao(e, pastos) {
-  if (e.tipo === 'inicial') return `Início do lote: ${numero(e.qtd)} cabeças`;
+  if (e.tipo === 'inicial') return `Início do lote: ${numero(e.qtd)} cabeças${e.pastoId ? ` · ${nomePasto(e.pastoId, pastos)}` : ''}`;
   if (e.tipo === 'pesagem') return `Peso médio: ${numero(e.peso, 1)} kg`;
   if (e.tipo === 'troca') return `Mudança para ${nomePasto(e.pastoId, pastos)}`;
   if (e.tipo === 'vacina') return `${e.produto}${e.carencia ? ` · carência de ${e.carencia} dias` : ' · sem carência'}`;
@@ -23,9 +23,9 @@ export function ListaEventos({ eventos, lotes, pastos, mostrarLote = true, naveg
   </li>)}</ul>;
 }
 
-export default function Historico({ lotes, eventos, pastos, navegar, avisar }) {
+export default function Historico({ lotes, eventos, pastos, pastosHistorico = pastos, navegar, avisar }) {
   const [filtro, setFiltro] = useState('todos');
   return <><PageTitle icon="historico">Histórico</PageTitle><p className="sub subtitle">Acompanhe o que aconteceu no rebanho.</p><div className="chips page-list"><Chip ativo={filtro === 'todos'} onClick={() => setFiltro('todos')}>Todos</Chip>{lotes.map(l => <Chip key={l.id} ativo={filtro === l.id} onClick={() => setFiltro(l.id)}>{l.nome}</Chip>)}</div>
-    <ListaEventos navegar={navegar} avisar={avisar} eventos={eventos.filter(e => filtro === 'todos' || e.loteId === filtro)} lotes={lotes} pastos={pastos} />
+    <ListaEventos navegar={navegar} avisar={avisar} eventos={eventos.filter(e => filtro === 'todos' || e.loteId === filtro)} lotes={lotes} pastos={pastosHistorico} />
   </>;
 }

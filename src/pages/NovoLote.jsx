@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { db, novoId } from '../lib/db.js';
 import { salvarRegistro } from '../lib/sync.js';
+import { salvarPasto, conferirVersao } from '../lib/manutencao.js';
 import { hojeISO } from '../lib/apresentacao.js';
 import CategoriasLote from '../components/CategoriasLote.jsx';
 import { EscolherPasto, Icon, PageTitle, Quantidade, Voltar } from '../components/UI.jsx';
@@ -29,14 +30,15 @@ export default function NovoLote({ lotes, pastos, navegar, avisar }) {
       const id = novoId();
       const destino = pastoId === 'novo' ? novoId() : pastoId;
       await db.transaction('rw', db.pastos, db.lotes, db.eventos, db.fila_sync, async () => {
-        if (pastoId === 'novo') await salvarRegistro('pastos', { id: destino, nome: pastoNome.trim(), criadoEm });
+        if (pastoId === 'novo') await salvarPasto(pastoNome, null, destino);
+        else conferirVersao(await db.pastos.get(destino));
         await salvarRegistro('lotes', { id, nome: nome.trim() || `Lote ${lotes.length + 1}`, categorias, criadoEm });
         await salvarRegistro('eventos', { id: novoId(), tipo: 'inicial', loteId: id, data: hojeISO(), qtd: Number(qtd), pastoId: destino, criadoEm });
       });
       avisar('Lote criado e salvo neste aparelho.');
       navegar('lote', id);
-    } catch {
-      setErro('Não foi possível salvar o lote. Seus campos foram mantidos; tente novamente.');
+    } catch (error) {
+      setErro(error.message || 'Não foi possível salvar o lote. Seus campos foram mantidos; tente novamente.');
     } finally {
       ocupado.current = false;
       setSalvando(false);

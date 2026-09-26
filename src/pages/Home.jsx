@@ -22,7 +22,7 @@ export default function Home({ lotes, eventos, pastos, chuvas, localizacao, nave
     <div className="tag" role="group" aria-label={`Total do rebanho: ${total} cabeças`}>
       <div className="tag-num">{numero(total)}</div><div className="tag-lbl">cabeças no rebanho</div>
     </div>
-    {categorias.length > 0 && <section aria-label="Categorias presentes"><p className="hint">Categorias presentes nos lotes</p><p className="category-label">{categorias.join(' · ')}</p><p className="hint">Sem divisão de cabeças por categoria.</p></section>}
+    <section aria-label="Categorias do rebanho" className="herd-categories"><SectionTitle icon="categoria">Categorias do rebanho</SectionTitle>{categorias.length ? <ul className="chips category-badges">{categorias.map(c => <li className="chip" key={c}>{c}</li>)}</ul> : <p className="hint">Nenhuma categoria nos lotes ativos com saldo.</p>}<p className="hint">Sem divisão de cabeças por categoria.</p></section>
     {lotes.length === 0 && <EmptyState icon="lotes" title="Seu rebanho começa aqui"><p>Nenhum lote cadastrado ainda. Crie o primeiro lote para acompanhar seu rebanho.</p><button className="btn" onClick={() => navegar('novoLote')}><Icon nome="novoLote" />Criar primeiro lote</button></EmptyState>}
     {alertas.length > 0 && <section className="home-section alerts-section"><SectionTitle icon="alerta">Precisa de atenção</SectionTitle>{alertas.map((a, i) => <button className="alert alert-row" key={`${a.loteId}-${i}`} onClick={() => navegar('lote', a.loteId)}><Icon nome="alerta" /><span>{a.texto}</span><Icon nome="chev" /></button>)}</section>}
     <Clima key={`${localizacao?.latitude},${localizacao?.longitude}`} localizacao={localizacao} navegar={navegar} />
@@ -35,7 +35,7 @@ export default function Home({ lotes, eventos, pastos, chuvas, localizacao, nave
       <LeiturasChuva chuvas={chuvas} navegar={navegar} avisar={avisar} />
     </section>
     <section className="home-section quiet-section"><SectionTitle icon="venda">Arroba do boi (CEPEA)</SectionTitle><p className="hint">Cotação indisponível. Nenhuma fonte de atualização conectada.</p></section>
-    <section className="home-section"><SectionTitle icon="lotes">Por potreiro</SectionTitle>
+    <section className="home-section"><SectionTitle icon="pastos">Por potreiro</SectionTitle><button className="btn ghost section-action" onClick={() => navegar('pastos')}><Icon nome="pastos" />Pastos e potreiros</button>
       {pastos.length === 0 ? <p className="hint">Os potreiros aparecerão aqui ao cadastrar seus lotes.</p> : <ul className="list">{pastos.map(p => {
         const ocupantes = linhas.filter(x => x.saldo > 0 && x.pastoId === p.id);
         return <li key={p.id}><div className="row"><span className="row-n">{numero(ocupantes.reduce((soma, x) => soma + x.saldo, 0))}</span><span className="row-main"><strong>{p.nome}</strong><span>{ocupantes.length ? ocupantes.map(x => x.lote.nome).join(', ') : 'Sem gado agora'}</span></span></div></li>;

@@ -6,7 +6,8 @@ import { dataFormatada, nomePasto, numero } from '../lib/apresentacao.js';
 import { Icon, SectionTitle, Voltar } from '../components/UI.jsx';
 import { ListaEventos } from './Historico.jsx';
 
-export default function Lote({ loteId, lotes, eventos, pastos, navegar, avisar }) {
+export default function Lote({ loteId, lotes, eventos, pastos: ativos, pastosHistorico = ativos, navegar, avisar }) {
+  const pastos = pastosHistorico;
   const lote = lotes.find(l => l.id === loteId);
   if (!lote) return <><Voltar onClick={() => navegar('lotes')} /><p role="status">Este lote não está mais disponível.</p></>;
   const ultima = pesagensDoLote(loteId, eventos).at(-1);

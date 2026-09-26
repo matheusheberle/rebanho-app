@@ -5,6 +5,7 @@ import { iniciarSincronizacao, getSyncStatus, subscribeSyncStatus } from './lib/
 import { supabaseConfigurado } from './lib/supabase.js';
 import BottomNav from './components/BottomNav.jsx';
 import Home from './pages/Home.jsx';
+import Pastos from './pages/Pastos.jsx';
 import Lotes from './pages/Lotes.jsx';
 import Lote from './pages/Lote.jsx';
 import Registrar from './pages/Registrar.jsx';
@@ -49,7 +50,7 @@ export default function App() {
   function navegar(pagina, loteId = null, tipo = null, registroEdicao = null) {
     setRota(anterior => ({ pagina, loteId, tipo, registroEdicao, chave: anterior.chave + 1 }));
   }
-  const paginas = { editarLote: EditarLote, home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
+  const paginas = { pastos: Pastos, editarLote: EditarLote, home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
   const Pagina = paginas[rota.pagina] || Home;
   const mensagens = { offline: 'Offline · dados neste aparelho', sincronizando: 'Sincronizando…', sincronizado: 'Sincronizado', erro: 'Erro ao sincronizar' };
   const status = !supabaseConfigurado ? 'Dados neste aparelho · nuvem não configurada'

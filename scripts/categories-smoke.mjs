@@ -32,7 +32,7 @@ export async function testarCategorias({ command, evaluate, until, click, fill }
   await click('Início');
   await until(`document.querySelector('.tag-num')?.textContent==='118'`);
   assert.equal(await evaluate(`!!document.querySelector('.bar')`),false);
-  assert.match(await evaluate(`document.querySelector('[aria-label="Categorias presentes"]').textContent`),/Sem divisão/);
+  assert.match(await evaluate(`document.querySelector('[aria-label="Categorias do rebanho"]').textContent`),/Sem divisão/);
   await command('Page.reload');
   await until(`document.querySelector('.tag-num')?.textContent==='118'`);
   await click('Lotes');

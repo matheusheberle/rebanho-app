@@ -41,6 +41,19 @@ export async function testarSincronizacao({ evaluate, until }) {
       conferir((await b.eventos.get(inicial)).pastoId === pasto, 'Conversão de chaves estrangeiras');
       igual(nuvem.chamadas.filter(c=>c.tipo==='rpc').map(c=>c.tabela), ['pastos','lotes','eventos'], 'Ordem das dependências');
       fases.push('A');
+      relogio+=1000;
+      await sA.salvarRegistro('pastos',{id:pasto,nome:'Pasto renomeado'});
+      await sA.sincronizarTudo(); await sB.sincronizarTudo();
+      conferir((await b.pastos.get(pasto)).nome==='Pasto renomeado','Nome do pasto sincroniza A → B');
+      const livre = crypto.randomUUID(); relogio+=1000;
+      await sA.salvarRegistro('pastos',{id:livre,nome:'Livre'});
+      await sA.sincronizarTudo(); await sB.sincronizarTudo();
+      relogio+=1000; await sB.salvarRegistro('pastos',{id:livre,excluidoEm:new Date(relogio).toISOString()});
+      await sB.sincronizarTudo(); await sA.sincronizarTudo();
+      conferir((await a.pastos.get(livre)).excluidoEm,'Exclusão do pasto sincroniza');
+      relogio+=1000; await sA.salvarRegistro('pastos',{id:livre,excluidoEm:null});
+      await sA.sincronizarTudo(); await sB.sincronizarTudo();
+      conferir(!(await b.pastos.get(livre)).excluidoEm,'Desfazer do pasto sincroniza');
       onlineA=false; relogio+=1000;
       await sA.salvarRegistro('lotes',{id:lote,categorias:['Vacas','Bezerros']});
       onlineA=true; await sA.sincronizarTudo(); await sB.sincronizarTudo();
@@ -169,7 +182,7 @@ export async function testarSincronizacao({ evaluate, until }) {
         nuvem.tabelas.pastos.set(id,{id,nome:'Página '+i,criado_em:'2024-01-01T00:00:00Z',atualizado_em:'2024-01-01T00:00:00Z'});
       }
       await sB.sincronizarTudo();
-      conferir(await b.pastos.count() === 1106, 'Download completo paginado');
+      conferir(await b.pastos.count() === 1107, 'Download completo paginado');
       conferir(await b.lotes.get(legado), 'Registro legado chega ao segundo aparelho');
       conferir(estados.includes('offline') && estados.includes('sincronizando') && estados.includes('sincronizado') && estados.includes('erro'), 'Todos os estados');
       conferir(!nuvem.chamadas.some(c=>c.tabela==='fila_sync'), 'Fila nunca enviada');

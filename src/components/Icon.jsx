@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 const ICONES = {
-  home: House, lotes: Fence, registrar: CirclePlus, historico: History,
+  home: House, lotes: Fence, pastos: Fence, registrar: CirclePlus, historico: History,
   clima: CloudSun, chuva: Droplets, pesagem: Scale, venda: ArrowUpRight,
   compra: ShoppingCart, nascimento: Sprout, morte: HeartCrack, troca: MoveRight,
   vacina: Syringe, monta: HeartHandshake, prenhez: ClipboardCheck,

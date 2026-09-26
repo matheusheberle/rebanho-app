@@ -11,6 +11,7 @@ import { testarClimaEChuva } from './weather-smoke.mjs';
 import { testarSincronizacao } from './sync-smoke.mjs';
 import { testarManutencao } from './maintenance-smoke.mjs';
 import { testarCategorias } from './categories-smoke.mjs';
+import { testarPastos } from './pastures-smoke.mjs';
 
 const browserPath = process.env.BROWSER_PATH || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const profile = await mkdtemp(join(tmpdir(), 'rebanho-smoke-'));
@@ -129,6 +130,10 @@ try {
   assert.deepEqual(migracao, {versao:3, nome:'Lote existente', qtd:7, pastos:1, fila:1, chuvas:0});
   await command('Page.navigate', { url: 'http://127.0.0.1:5197' });
   await until(`document.body.textContent.includes('Criar primeiro lote')`);
+  assert.equal(await evaluate(`document.querySelectorAll('.category-badges .chip').length`),0);
+  await click('Pastos e potreiros');
+  await until(`document.body.textContent.includes('Nenhum pasto cadastrado ainda.')`);
+  await click('Início');
   assert.equal(await evaluate(`document.querySelector('.tag-num').textContent`), '0');
   await click('Criar primeiro lote');
   await fill('lote-nome', 'Lote de teste');
@@ -188,6 +193,7 @@ try {
   await testarSincronizacao({ evaluate, until });
   await testarManutencao({ command, evaluate, until, click, fill });
   await testarCategorias({ command, evaluate, until, click, fill });
+  await testarPastos({ command, evaluate, until, click, fill });
   assert.deepEqual(runtimeErrors, [], 'Sem exceções no navegador');
   const screenshot = await command('Page.captureScreenshot', { format: 'png' });
   await writeFile(join(tmpdir(), 'rebanho-smoke.png'), Buffer.from(screenshot.data, 'base64'));

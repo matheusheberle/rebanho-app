@@ -1,14 +1,15 @@
-import { db } from './db.js';
+import { db, novoId } from './db.js';
 import { salvarRegistro } from './sync.js';
 import { saldoDoLote } from './calc.js';
 import { validarLeitura } from './chuva.js';
 import { compararVersoes } from './sync-records.js';
 import { categoriasDoLote } from './categorias.js';
+import { conferirNomePasto, usoDoPasto, conferirDestinoAtual } from './pastos.js';
 
 export const ativos = registros => registros.filter(r => !r.excluidoEm);
 export function dadosAtivos(dados) {
   const lotes = ativos(dados.lotes), ids = new Set(lotes.map(l => l.id));
-  return { ...dados, lotes, pastos: ativos(dados.pastos), chuvas: ativos(dados.chuvas), eventos: ativos(dados.eventos).filter(e => ids.has(e.loteId)) };
+  return { ...dados, lotes, pastosHistorico: dados.pastos, pastos: ativos(dados.pastos), chuvas: ativos(dados.chuvas), eventos: ativos(dados.eventos).filter(e => ids.has(e.loteId)) };
 }
 
 export function validarHistorico(loteId, eventos) {
@@ -51,13 +52,19 @@ export async function editarLote(registro, anterior) {
 }
 
 export async function excluirRegistro(tabela, registro) {
-  return db.transaction('rw', db[tabela], db.eventos, db.lotes, db.fila_sync, async () => {
+  return db.transaction('rw', db[tabela], db.pastos, db.eventos, db.lotes, db.fila_sync, async () => {
     const atual = await db[tabela].get(registro.id);
     conferirVersao(atual, registro);
-    if (tabela === 'pastos') throw new Error('A exclusão de potreiros não está disponível nesta etapa.');
+    if (tabela === 'pastos') {
+      const uso = usoDoPasto(atual.id, await db.lotes.toArray(), await db.eventos.toArray());
+      if (uso.lotes) throw new Error(`Este pasto está sendo usado por ${uso.lotes} ${uso.lotes === 1 ? 'lote e não pode' : 'lotes e não pode'} ser excluído.`);
+    }
     if (tabela === 'eventos') {
       if (atual.tipo === 'inicial') throw new Error('O registro inicial faz parte da criação do lote e não pode ser excluído diretamente.');
-      validarHistorico(atual.loteId, (await db.eventos.where('loteId').equals(atual.loteId).toArray()).filter(e => e.id !== atual.id));
+      const antes = await db.eventos.where('loteId').equals(atual.loteId).toArray();
+      const depois = antes.filter(e => e.id !== atual.id);
+      validarHistorico(atual.loteId, depois);
+      conferirDestinoAtual(atual.loteId, antes, depois, await db.pastos.toArray());
     }
     await salvarRegistro(tabela, { id: atual.id, excluidoEm: new Date().toISOString() });
     return db[tabela].get(atual.id);
@@ -65,16 +72,31 @@ export async function excluirRegistro(tabela, registro) {
 }
 
 export async function desfazerExclusao(tabela, excluido) {
-  return db.transaction('rw', db[tabela], db.eventos, db.lotes, db.fila_sync, async () => {
+  return db.transaction('rw', db[tabela], db.pastos, db.eventos, db.lotes, db.fila_sync, async () => {
     const atual = await db[tabela].get(excluido.id);
     if (!atual?.excluidoEm || compararVersoes(atual, excluido) !== 0)
       throw new Error('O registro mudou depois da exclusão. Não foi restaurado; confira os dados atualizados.');
+    if (tabela === 'pastos') conferirNomePasto(atual.nome, await db.pastos.toArray(), atual.id);
+    if (tabela === 'lotes') conferirDestinoAtual(atual.id, [], await db.eventos.where('loteId').equals(atual.id).toArray(), await db.pastos.toArray());
     if (tabela === 'eventos') {
       if ((await db.lotes.get(atual.loteId))?.excluidoEm) throw new Error('O lote está excluído.');
-      validarHistorico(atual.loteId, (await db.eventos.where('loteId').equals(atual.loteId).toArray()).map(e => e.id === atual.id ? { ...e, excluidoEm: null } : e));
+      const antes = await db.eventos.where('loteId').equals(atual.loteId).toArray();
+      const depois = antes.map(e => e.id === atual.id ? { ...e, excluidoEm: null } : e);
+      validarHistorico(atual.loteId, depois);
+      conferirDestinoAtual(atual.loteId, antes, depois, await db.pastos.toArray());
     }
     if (tabela === 'chuvas' && ativos(await db.chuvas.where('data').equals(atual.data).toArray()).length)
       throw new Error('Já existe outra leitura ativa nesta data. A exclusão não foi desfeita.');
     await salvarRegistro(tabela, { id: atual.id, excluidoEm: null });
+  });
+}
+
+export async function salvarPasto(nome, anterior = null, idNovo = novoId()) {
+  return db.transaction('rw', db.pastos, db.fila_sync, async () => {
+    if (anterior) conferirVersao(await db.pastos.get(anterior.id), anterior);
+    const id = anterior?.id || idNovo;
+    const limpo = conferirNomePasto(nome, await db.pastos.toArray(), id);
+    await salvarRegistro('pastos', { id, nome: limpo });
+    return id;
   });
 }

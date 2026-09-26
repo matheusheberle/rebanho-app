@@ -379,3 +379,7 @@ legend.lbl { padding-top: 28px; }
 .sync-status::before { display: none; }
 select.input { font: inherit; color: var(--ink); }
 .toast { flex-wrap: wrap; }
+.herd-categories { margin-top: 26px; }
+.category-badges { list-style: none; padding: 0; margin: 12px 0; }
+.category-badges .chip { cursor: default; white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.pasture-list strong { overflow-wrap: anywhere; }

@@ -1,12 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { ativos, conferirVersao, validarHistorico } from '../lib/manutencao.js';
+import { ativos, conferirVersao, validarHistorico, salvarPasto } from '../lib/manutencao.js';
 import { db, novoId } from '../lib/db.js';
+import { conferirDestinoAtual } from '../lib/pastos.js';
 import { salvarRegistro } from '../lib/sync.js';
 import { saldoDoLote, pastoAtualDoLote, GESTACAO_DIAS } from '../lib/calc.js';
 import { TIPOS, hojeISO } from '../lib/apresentacao.js';
 import { Chip, EmptyState, EscolherPasto, Icon, LinhaLote, PageTitle, Quantidade, Voltar } from '../components/UI.jsx';
 
-export default function Registrar({ loteId: inicial, tipoInicial, lotes, eventos, pastos, navegar, avisar, registroEdicao }) {
+export default function Registrar({ loteId: inicial, tipoInicial, lotes, eventos, pastos, pastosHistorico = pastos, navegar, avisar, registroEdicao }) {
   const [original] = useState(registroEdicao);
   const [loteId, setLoteId] = useState(original?.loteId || inicial || '');
   const [tipo, setTipo] = useState(original?.tipo || tipoInicial || '');
@@ -51,9 +52,11 @@ export default function Registrar({ loteId: inicial, tipoInicial, lotes, eventos
         if (tipo === 'troca') {
           if (form.pastoId === pastoAtualDoLote(loteId, atuais.filter(e => e.data <= form.data))) throw new Error('O lote já está nesse potreiro.');
           registro.pastoId = form.pastoId === 'novo' ? novoId() : form.pastoId;
-          if (form.pastoId === 'novo') await salvarRegistro('pastos', { id: registro.pastoId, nome: form.pastoNome.trim(), criadoEm });
+          if (form.pastoId === 'novo') await salvarPasto(form.pastoNome, null, registro.pastoId);
+          else if (!(original?.pastoId === registro.pastoId && original.data === registro.data)) conferirVersao(await db.pastos.get(registro.pastoId));
         }
         validarHistorico(loteId, [...atuais, registro]);
+        conferirDestinoAtual(loteId, original ? [...atuais, original] : atuais, [...atuais, registro], await db.pastos.toArray());
         await salvarRegistro('eventos', registro);
       });
       avisar('Registro salvo neste aparelho.');
@@ -68,7 +71,7 @@ export default function Registrar({ loteId: inicial, tipoInicial, lotes, eventos
 
   if (original && !lote) return <><Voltar onClick={() => navegar('historico')} /><p role="status">O lote deste registro não está mais disponível. A edição não foi salva.</p></>;
   if (!lote) return <><PageTitle icon="registrar">Registrar</PageTitle><p className="sub subtitle">Qual lote?</p>
-    {lotes.length ? <ul className="list page-list">{lotes.map(l => <li key={l.id}><LinhaLote lote={l} eventos={eventos} pastos={pastos} onClick={() => setLoteId(l.id)} /></li>)}</ul> : <EmptyState icon="lotes" title="Escolha seu primeiro lote"><p>Cadastre um lote para fazer registros.</p><button className="btn" onClick={() => navegar('novoLote')}><Icon nome="novoLote" />Criar primeiro lote</button></EmptyState>}
+    {lotes.length ? <ul className="list page-list">{lotes.map(l => <li key={l.id}><LinhaLote lote={l} eventos={eventos} pastos={pastosHistorico} onClick={() => setLoteId(l.id)} /></li>)}</ul> : <EmptyState icon="lotes" title="Escolha seu primeiro lote"><p>Cadastre um lote para fazer registros.</p><button className="btn" onClick={() => navegar('novoLote')}><Icon nome="novoLote" />Criar primeiro lote</button></EmptyState>}
   </>;
   if (!tipo) return <><Voltar onClick={() => setLoteId('')}>Mudar o lote</Voltar><h1>{lote.nome}</h1><p className="sub subtitle">O que aconteceu?</p>
     <div className="tipos">{Object.entries(TIPOS).filter(([id]) => !['monta', 'prenhez'].includes(id)).map(([id, t]) => <button key={id} className="tipo" onClick={() => setTipo(id)}><Icon nome={id} size={26} /><strong>{t.nome}</strong><span>{t.dica}</span></button>)}</div>
