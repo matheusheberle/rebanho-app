@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rebanho (protótipo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F4EE; --surface:#FFFFFF; --ink:#17261D; --muted:#586559; --line:#D5DBCB;
+  --capim:#2F5D3A; --brinco:#F5C518; --brinco-ink:#17261D;
+  --warn-bg:#FFF2BF; --warn-line:#D9A800; --danger:#A3261E;
+  --body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --display:'Bricolage Grotesque','Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101812; --surface:#18241B; --ink:#EDF2E8; --muted:#9BAA9E; --line:#2A392E;
+    --capim:#8CCB98; --warn-bg:#3A3210; --warn-line:#C9A227; --danger:#FF9A8F;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101812; --surface:#18241B; --ink:#EDF2E8; --muted:#9BAA9E; --line:#2A392E;
+  --capim:#8CCB98; --warn-bg:#3A3210; --warn-line:#C9A227; --danger:#FF9A8F;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.4}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+h1,h2{font-family:var(--display);margin:0;letter-spacing:-.01em}
+h1{font-size:32px;font-weight:800;line-height:1.1}
+h2{font-size:21px;font-weight:600;margin:30px 0 4px}
+.sub{color:var(--muted);font-size:16px}
+
+.app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--bg)}
+.demo{font-size:14px;color:var(--muted);padding:8px 20px;border-bottom:1px solid var(--line)}
+main{flex:1;padding:22px 20px 40px}
+
+/* navegação */
+nav{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.nav-i{position:relative;background:none;border:0;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--muted)}
+.nav-i svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-i.on{color:var(--ink)}
+.nav-i.on::before{content:"";position:absolute;top:-1px;left:22%;right:22%;height:4px;background:var(--brinco);border-radius:0 0 4px 4px}
+.nav-i.reg .ic{width:46px;height:46px;border-radius:50%;background:var(--brinco);color:var(--brinco-ink);display:grid;place-items:center;margin-top:-2px}
+.nav-i.reg svg{stroke-width:2.6}
+
+/* brinco (destaque do início) */
+.tag{position:relative;width:min(80%,290px);margin:26px auto 22px;background:var(--brinco);color:var(--brinco-ink);border-radius:30px;padding:54px 18px 24px;text-align:center;transform:rotate(-1.5deg);transform-origin:50% 0;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.tag::before{content:"";position:absolute;left:50%;top:15px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 3px rgba(23,38,29,.4)}
+.tag::after{content:"";position:absolute;inset:8px;border:2px solid rgba(23,38,29,.22);border-radius:23px;pointer-events:none}
+.tag-num{font-family:var(--display);font-weight:800;font-size:92px;line-height:.95;letter-spacing:-.03em}
+.tag-lbl{font-weight:700;font-size:19px;margin-top:8px}
+.tag.swing{animation:swing 1.1s ease-out 1}
+@keyframes swing{0%{transform:rotate(-8deg)}38%{transform:rotate(2deg)}68%{transform:rotate(-2.6deg)}100%{transform:rotate(-1.5deg)}}
+@media (prefers-reduced-motion:reduce){.tag.swing{animation:none}}
+
+.bar{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden;margin-top:6px}
+.bar span{display:block;min-width:4px}
+.leg{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:16px}
+.leg li{display:flex;align-items:center;gap:8px}
+.leg i{width:14px;height:14px;border-radius:4px;flex:none}
+.leg b{margin-left:auto;font-family:var(--display);font-size:18px}
+
+/* listas */
+.list{list-style:none;margin:6px 0 0;padding:0}
+.row{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:16px 0;color:inherit}
+div.row{cursor:default}
+.row-n{font-family:var(--display);font-weight:800;font-size:34px;min-width:58px;line-height:1}
+.row-main{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.row-main strong{font-size:19px}
+.row-main span{font-size:16px;color:var(--muted)}
+.chev{width:22px;height:22px;flex:none;fill:none;stroke:var(--muted);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+
+.alert{display:block;width:100%;text-align:left;background:var(--warn-bg);border:0;border-left:6px solid var(--warn-line);border-radius:0 12px 12px 0;padding:14px 16px;margin-top:10px;color:inherit}
+
+/* botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:58px;padding:0 24px;border-radius:16px;border:2px solid transparent;background:var(--brinco);color:var(--brinco-ink);font-weight:700;font-size:19px;width:100%}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.sm{min-height:46px;padding:0 16px;font-size:17px;width:auto;border-radius:12px}
+.linkbtn{background:none;border:0;padding:8px 0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:16px}
+.back{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:6px 8px 6px 0;margin:-6px 0 10px;font-weight:700;color:var(--capim);font-size:17px}
+.back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+
+/* lote */
+.saldo{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;margin-top:16px}
+.saldo small{font-family:var(--body);font-weight:700;font-size:19px;color:var(--muted);margin-left:6px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0 0}
+.stats div{border-top:3px solid var(--ink);padding-top:8px}
+.stats dt{font-size:15px;color:var(--muted)}
+.stats dd{margin:2px 0 0;font-family:var(--display);font-weight:800;font-size:28px}
+.stats small{display:block;font-size:14px;color:var(--muted)}
+.hint{color:var(--muted);font-size:16px;margin:8px 0 0}
+.acoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.acoes .btn{min-height:64px;padding:0 10px}
+.acoes .full{grid-column:1/-1}
+
+.prog{height:14px;border-radius:7px;background:var(--line);overflow:hidden;margin-top:12px}
+.prog span{display:block;height:100%;background:var(--capim);border-radius:7px}
+.clima{display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding-bottom:4px}
+.clima-d{flex:none;width:74px;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.cd-dia{font-weight:700;font-size:15px;text-transform:capitalize}
+.cd-temp{font-family:var(--display);font-weight:800;font-size:19px}
+.cd-temp small{font-family:var(--body);font-weight:600;color:var(--muted);font-size:15px;margin-left:3px}
+.cd-chuva{font-size:14px;color:var(--muted);font-weight:700}
+.cd-chuva.forte{color:var(--warn-line)}
+.arroba{display:flex;align-items:baseline;gap:12px;margin-top:12px;flex-wrap:wrap}
+.ar-v{font-family:var(--display);font-weight:800;font-size:34px}
+.ar-var{font-weight:700;font-size:17px}
+.ar-var.pos{color:var(--capim)} .ar-var.neg{color:var(--danger)}
+/* histórico */
+.ev{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.ev-d{min-width:52px;font-family:var(--display);font-weight:600;font-size:18px;color:var(--muted)}
+.ev-m{flex:1;min-width:0}
+.ev-m strong{display:block}
+.ev-m span{color:var(--muted);font-size:16px}
+.ev-q{font-family:var(--display);font-weight:800;font-size:24px}
+.ev-q.pos{color:var(--capim)} .ev-q.neg{color:var(--danger)}
+.ev .linkbtn{padding:4px 0;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;border-radius:999px;border:2px solid var(--line);background:var(--surface);font-weight:700;font-size:17px}
+.chip small{font-weight:400;color:var(--muted);font-size:15px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chip[aria-pressed="true"] small{color:var(--bg);opacity:.8}
+
+/* formulário */
+.tipos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.tipo{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:16px;min-height:96px;background:var(--surface);border:2px solid var(--line);border-radius:16px}
+.tipo strong{font-family:var(--display);font-size:21px;font-weight:600}
+.tipo span{font-size:15px;color:var(--muted)}
+.tipo:last-child{grid-column:1/-1;min-height:82px}
+.tipo.raro{min-height:64px;padding:12px 16px;opacity:.75}
+.tipo.raro strong{font-size:18px}
+.lbl{display:block;font-weight:700;margin:24px 0 8px}
+.input{width:100%;height:58px;padding:0 14px;font-size:20px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.suffix{position:relative}
+.suffix .input{padding-right:52px}
+.suffix i{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-style:normal;color:var(--muted);font-weight:700}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper .round{flex:none;width:62px;height:62px;border-radius:50%;border:2px solid var(--ink);background:transparent;font-size:32px;line-height:1;font-weight:700}
+.qty{flex:1;min-width:0;height:62px;text-align:center;font-family:var(--display);font-weight:800;font-size:38px;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink)}
+.quick{margin-top:10px}
+.erro{margin:18px 0 0;padding:12px 14px;border-left:6px solid var(--danger);background:var(--warn-bg);border-radius:0 10px 10px 0;font-weight:700}
+.salvar{margin-top:22px}
+
+/* aviso ao salvar */
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;background:var(--ink);color:var(--bg);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:20;font-weight:700}
+.toast[hidden]{display:none}
+.toast button{background:none;border:0;color:var(--bg);font-weight:700;text-decoration:underline;text-underline-offset:3px;padding:6px 4px;font-size:18px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="demo">Protótipo com dados de exemplo. Tudo fica salvo só neste aparelho.</div>
+  <main id="main"></main>
+  <nav id="nav" aria-label="Navegação principal"></nav>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+'use strict';
+var KEY='fazenda-proto-v5';
+var $=function(s){return document.querySelector(s);};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+
+/* ---------- tipos de registro ---------- */
+var TIPOS={
+  compra:{nome:'Compra',dica:'Entrou gado comprado',botao:'Registrar compra',ok:'Compra registrada'},
+  nascimento:{nome:'Nascimento',dica:'Nasceram bezerros',botao:'Registrar nascimento',ok:'Nascimento registrado'},
+  monta:{nome:'Monta ou inseminação',dica:'Período de cobertura das vacas',botao:'Registrar monta',ok:'Monta registrada'},
+  prenhez:{nome:'Diagnóstico de gestação',dica:'Quantas vacas estão prenhas',botao:'Registrar diagnóstico',ok:'Diagnóstico registrado'},
+  venda:{nome:'Venda',dica:'Saiu gado vendido',botao:'Registrar venda',ok:'Venda registrada'},
+  morte:{nome:'Morte',dica:'Perda de animais',botao:'Registrar morte',ok:'Morte registrada'},
+  troca:{nome:'Mudança de potreiro',dica:'O lote mudou de potreiro',botao:'Registrar mudança de potreiro',ok:'Mudança de potreiro registrada'},
+  pesagem:{nome:'Pesagem',dica:'Peso médio do lote',botao:'Registrar pesagem',ok:'Pesagem registrada'},
+  vacina:{nome:'Vacina ou remédio',dica:'Sanidade e prazo de carência',botao:'Registrar vacina ou remédio',ok:'Vacina ou remédio registrado'}
+};
+var DELTA={inicial:1,compra:1,nascimento:1,venda:-1,morte:-1};
+var CATS=['Bezerros','Novilhos','Bois','Vacas','Touros'];
+var CORES={Bezerros:'#B7D66B',Novilhos:'#79A94F',Bois:'#3E7A4B',Vacas:'#C99A66',Touros:'#7A5638'};
+
+/* ---------- datas e números ---------- */
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function hoje(){return iso(new Date());}
+function parse(s){var p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function addDias(s,n){var d=parse(s);d.setDate(d.getDate()+n);return iso(d);}
+function difDias(a,b){return Math.round((parse(b)-parse(a))/86400000);}
+function fmtData(s){return parse(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
+function rel(s){var n=difDias(s,hoje());return n===0?'hoje':n===1?'ontem':'há '+n+' dias';}
+function fmtNum(n,d){return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function pl(n,s,p){return n+' '+(n===1?s:p);}
+function num(v){var n=Number(String(v).replace(',','.'));return isFinite(n)?n:0;}
+var GESTACAO=285;
+var CLIMA={atualizado:'2026-09-25',dias:[
+  {data:'2026-09-25',max:31,min:17,chuva:5},
+  {data:'2026-09-26',max:35,min:19,chuva:0},
+  {data:'2026-09-27',max:36,min:22,chuva:0},
+  {data:'2026-09-28',max:34,min:23,chuva:10},
+  {data:'2026-09-29',max:26,min:20,chuva:75},
+  {data:'2026-09-30',max:23,min:18,chuva:75}
+]};
+function diaSemanaCurto(s){return parse(s).toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','').slice(0,3);}
+var ARROBA={data:'2026-09-21',valor:354.65,variacaoMes:2.98};
+function fmtDataAno(s){return parse(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+
+/* ---------- dados ---------- */
+function seed(){
+  var h=hoje();
+  var d=function(n){return addDias(h,-n);};
+  var s={seq:1,pastos:[],lotes:[],eventos:[]};
+  var P=function(nome){var p={id:'p'+(s.pastos.length+1),nome:nome};s.pastos.push(p);return p.id;};
+  var L=function(nome,cat){var l={id:'l'+(s.lotes.length+1),nome:nome,categoria:cat};s.lotes.push(l);return l.id;};
+  var E=function(tipo,loteId,data,extra){s.eventos.push(Object.assign({id:s.seq++,tipo:tipo,loteId:loteId,data:data},extra||{}));};
+  var pFundo=P('Potreiro do Fundo'),pInv=P('Invernada Grande'),pSede=P('Potreiro da Sede'),pAcude=P('Piquete do Açude');
+  var l1=L('Lote 1','Novilhos'),l2=L('Lote 2','Bois'),l3=L('Lote 3','Vacas'),l4=L('Lote 4','Bezerros');
+  E('inicial',l1,d(120),{qtd:48,pastoId:pInv});
+  E('pesagem',l1,d(55),{peso:292});
+  E('vacina',l1,d(40),{produto:'Clostridiose',carencia:0});
+  E('pesagem',l1,d(10),{peso:330});
+  E('vacina',l1,d(12),{produto:'Vermífugo',carencia:28});
+  E('inicial',l2,d(200),{qtd:66,pastoId:pInv});
+  E('troca',l2,d(90),{pastoId:pFundo});
+  E('pesagem',l2,d(120),{peso:400});
+  E('morte',l2,d(70),{qtd:1});
+  E('pesagem',l2,d(52),{peso:460});
+  E('venda',l2,d(15),{qtd:4});
+  E('inicial',l3,d(400),{qtd:80,pastoId:pSede});
+  E('pesagem',l3,d(80),{peso:452});
+  E('pesagem',l3,d(35),{peso:461});
+  E('nascimento',l3,d(30),{qtd:6});
+  E('vacina',l3,d(20),{produto:'Clostridiose',carencia:0});
+  E('nascimento',l3,d(9),{qtd:4});
+  E('monta',l3,d(320),{fim:d(230)});
+  E('prenhez',l3,d(200),{qtd:72});
+  E('inicial',l4,d(150),{qtd:100,pastoId:pAcude});
+  E('pesagem',l4,d(70),{peso:152});
+  E('compra',l4,d(40),{qtd:20});
+  E('morte',l4,d(25),{qtd:2});
+  E('pesagem',l4,d(20),{peso:190});
+  E('vacina',l4,d(5),{produto:'Brucelose',carencia:0});
+  return s;
+}
+function load(){
+  try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.lotes&&o.eventos&&o.pastos)return o;}}catch(e){}
+  return seed();
+}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+var S=load();
+var view='home',param=null,draft=null,draftLote=null,filtro='todos',pendDel=null,pendReset=false,first=true;
+
+/* ---------- cálculos (tudo vem dos eventos) ---------- */
+function cmp(a,b){return a.data<b.data?-1:a.data>b.data?1:a.id-b.id;}
+function evLote(id){return S.eventos.filter(function(e){return e.loteId===id;}).sort(cmp);}
+function saldo(id){return S.eventos.reduce(function(t,e){return (e.loteId===id&&DELTA[e.tipo])?t+DELTA[e.tipo]*e.qtd:t;},0);}
+function pastoDe(id){var p=null;evLote(id).forEach(function(e){if(e.pastoId&&(e.tipo==='inicial'||e.tipo==='troca'))p=e.pastoId;});return p;}
+function nomePasto(id){var p=S.pastos.filter(function(x){return x.id===id;})[0];return p?p.nome:'Sem potreiro';}
+function lote(id){return S.lotes.filter(function(l){return l.id===id;})[0];}
+function pesagens(id){return evLote(id).filter(function(e){return e.tipo==='pesagem';});}
+function gmd(id){
+  var p=pesagens(id);if(p.length<2)return null;
+  var a=p[p.length-2],b=p[p.length-1],n=difDias(a.data,b.data);
+  return n>0?(b.peso-a.peso)/n:null;
+}
+function resumoPeso(id){
+  var p=pesagens(id);if(!p.length)return 'Sem pesagem ainda';
+  var u=p[p.length-1],g=gmd(id);
+  return 'Peso médio '+fmtNum(u.peso,Number.isInteger(u.peso)?0:1)+' kg'+(g!==null?', '+fmtNum(g,2)+' kg por dia':'');
+}
+function janelaPartos(id){
+  var ev=evLote(id),ms=ev.filter(function(e){return e.tipo==='monta';});
+  if(!ms.length)return null;
+  var m=ms[ms.length-1];
+  var ini=addDias(m.data,GESTACAO),fim=addDias(m.fim||m.data,GESTACAO);
+  var pr=ev.filter(function(e){return e.tipo==='prenhez'&&e.data>=m.data;});
+  var esperado=pr.length?pr[pr.length-1].qtd:null;
+  var corte=addDias(ini,-20);
+  var nasc=ev.filter(function(e){return e.tipo==='nascimento'&&e.data>=corte;}).reduce(function(t,e){return t+e.qtd;},0);
+  return {ini:ini,fim:fim,esperado:esperado,nasc:nasc};
+}
+function descEv(e){
+  switch(e.tipo){
+    case 'inicial':return 'Lote começou com '+pl(e.qtd,'cabeça','cabeças');
+    case 'compra':return 'Compra de '+pl(e.qtd,'cabeça','cabeças');
+    case 'nascimento':return e.qtd===1?'Nasceu 1 bezerro':'Nasceram '+e.qtd+' bezerros';
+    case 'venda':return 'Venda de '+pl(e.qtd,'cabeça','cabeças');
+    case 'morte':return 'Morte de '+pl(e.qtd,'cabeça','cabeças');
+    case 'troca':return 'Foi para '+nomePasto(e.pastoId);
+    case 'pesagem':return 'Pesagem: média de '+fmtNum(e.peso,Number.isInteger(e.peso)?0:1)+' kg';
+    case 'monta':return (e.fim&&e.fim!==e.data)?'Monta de '+fmtDataAno(e.data)+' a '+fmtDataAno(e.fim):'Inseminação ou cobertura em '+fmtDataAno(e.data);
+    case 'prenhez':return 'Diagnóstico: '+pl(e.qtd,'vaca prenha','vacas prenhas');
+    case 'vacina':return e.produto+(e.carencia>0?', carência de '+e.carencia+' dias':'');
+  }
+  return e.tipo;
+}
+function alertas(){
+  var out=[],h=hoje();
+  S.lotes.forEach(function(l){
+    if(saldo(l.id)<=0)return;
+    evLote(l.id).filter(function(e){return e.tipo==='vacina'&&e.carencia>0;}).forEach(function(e){
+      var fim=addDias(e.data,e.carencia),n=difDias(h,fim);
+      if(n>=0)out.push({loteId:l.id,ordem:n,texto:l.nome+': a carência de '+e.produto+' termina '+(n===0?'hoje':n===1?'amanhã':'em '+n+' dias')+' ('+fmtData(fim)+'). Não envie para abate antes dessa data.'});
+    });
+    var ps=pesagens(l.id),ev=evLote(l.id);
+    var ref=ps.length?ps[ps.length-1].data:ev[0].data,n2=difDias(ref,h);
+    if(n2>45)out.push({loteId:l.id,ordem:1000+n2,texto:ps.length?l.nome+': sem pesagem há '+n2+' dias.':l.nome+': ainda não foi pesado (entrou há '+n2+' dias).'});
+    var jp=janelaPartos(l.id);
+    if(jp){
+      var ate=difDias(h,jp.ini),fimN=difDias(h,jp.fim);
+      var falta=jp.esperado!==null?Math.max(0,jp.esperado-jp.nasc):0;
+      if(ate>0&&ate<=30){
+        out.push({loteId:l.id,ordem:ate,texto:l.nome+': os partos previstos começam em '+ate+' dias ('+fmtData(jp.ini)+'). Vale se preparar e observar as vacas mais de perto.'});
+      }else if(ate<=0&&fimN>=0){
+        out.push({loteId:l.id,ordem:0,texto:l.nome+': janela de partos em andamento até '+fmtData(jp.fim)+'. '+(jp.esperado!==null?'Nasceram '+jp.nasc+' de cerca de '+jp.esperado+' esperados.':'Nasceram '+jp.nasc+' até agora.')});
+      }else if(fimN<0&&fimN>=-45&&falta>0){
+        out.push({loteId:l.id,ordem:1,texto:l.nome+': a data prevista de parto já passou e ainda faltam cerca de '+falta+' bezerros. Vale conferir as vacas que não pariram.'});
+      }
+    }
+  });
+  return out.sort(function(a,b){return a.ordem-b.ordem;});
+}
+
+/* ---------- ícones ---------- */
+var IC={
+  home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  lotes:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="3"/></svg>',
+  registrar:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  hist:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  chev:'<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>'
+};
+
+/* ---------- telas ---------- */
+function vNav(){
+  var ativo=(view==='lote'||view==='novoLote')?'lotes':view;
+  var it=[['home','Início'],['lotes','Lotes'],['registrar','Registrar'],['hist','Histórico']];
+  return it.map(function(x){
+    var on=ativo===x[0];
+    return '<button class="nav-i'+(on?' on':'')+(x[0]==='registrar'?' reg':'')+'" data-a="nav" data-v="'+x[0]+'"'+(on?' aria-current="page"':'')+'><span class="ic">'+IC[x[0]]+'</span><span>'+x[1]+'</span></button>';
+  }).join('');
+}
+
+function vClima(){
+  var dias=CLIMA.dias.slice(0,6);
+  var chuvaForte=dias.filter(function(d){return d.chuva>=60;});
+  var h='<h2>Previsão do tempo</h2>';
+  h+='<div class="clima">'+dias.map(function(d,i){
+    return '<div class="clima-d"><span class="cd-dia">'+(i===0?'Hoje':diaSemanaCurto(d.data))+'</span><span class="cd-temp">'+d.max+'°<small>'+d.min+'°</small></span><span class="cd-chuva'+(d.chuva>=60?' forte':'')+'">'+d.chuva+'%</span></div>';
+  }).join('')+'</div>';
+  if(chuvaForte.length)h+='<p class="hint">Chance de chuva forte em '+pl(chuvaForte.length,'dia','dias')+' desta semana ('+chuvaForte.map(function(d){return diaSemanaCurto(d.data);}).join(', ')+'). Pode valer adiar mudança de potreiro ou manejo que dependa de tempo seco.</p>';
+  h+='<p class="hint" style="margin-top:4px">Dados de exemplo para teste. No app de verdade a previsão vem ao vivo, pela localização da fazenda.</p>';
+  return h;
+}
+function vArroba(){
+  var up=ARROBA.variacaoMes>=0;
+  var h='<h2>Arroba do boi (CEPEA)</h2>';
+  h+='<div class="arroba"><span class="ar-v">R$ '+fmtNum(ARROBA.valor,2)+'</span><span class="ar-var '+(up?'pos':'neg')+'">'+(up?'▲':'▼')+' '+fmtNum(Math.abs(ARROBA.variacaoMes),2)+'% no mês</span></div>';
+  h+='<p class="hint">Atualizado em '+fmtDataAno(ARROBA.data)+'. Dado de exemplo fixo neste protótipo; no app de verdade precisaria de atualização manual ou de uma fonte com dados abertos.</p>';
+  return h;
+}
+function vHome(){
+  var linhas=S.lotes.map(function(l){return {l:l,n:saldo(l.id)};});
+  var total=linhas.reduce(function(t,x){return t+x.n;},0);
+  var porCat={};linhas.forEach(function(x){porCat[x.l.categoria]=(porCat[x.l.categoria]||0)+x.n;});
+  var cats=CATS.filter(function(c){return porCat[c]>0;});
+  var data=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  var h='<h1>Rebanho hoje</h1><p class="sub" style="margin:6px 0 0">'+esc(data)+'</p>';
+  h+='<div class="tag'+(first?' swing':'')+'" role="group" aria-label="Total do rebanho: '+total+' cabeças"><div class="tag-num">'+total+'</div><div class="tag-lbl">cabeças no rebanho</div></div>';
+  if(total>0){
+    h+='<div class="bar" aria-hidden="true">'+cats.map(function(c){return '<span style="width:'+(porCat[c]/total*100)+'%;background:'+CORES[c]+'"></span>';}).join('')+'</div>';
+    h+='<ul class="leg">'+cats.map(function(c){return '<li><i style="background:'+CORES[c]+'"></i>'+c+'<b>'+porCat[c]+'</b></li>';}).join('')+'</ul>';
+  }
+  var al=alertas();
+  if(al.length){
+    h+='<h2>Precisa de atenção</h2>';
+    h+=al.map(function(a){return '<button class="alert" data-a="lote" data-id="'+a.loteId+'">'+esc(a.texto)+'</button>';}).join('');
+  }
+  h+=vClima();
+  h+=vArroba();
+  h+='<h2>Por potreiro</h2><div class="list">';
+  h+=S.pastos.map(function(p){
+    var ls=linhas.filter(function(x){return x.n>0&&pastoDe(x.l.id)===p.id;});
+    var n=ls.reduce(function(t,x){return t+x.n;},0);
+    return '<div class="row"><span class="row-n">'+n+'</span><span class="row-main"><strong>'+esc(p.nome)+'</strong><span>'+(ls.length?esc(ls.map(function(x){return x.l.nome;}).join(', ')):'Sem gado agora')+'</span></span></div>';
+  }).join('');
+  h+='</div>';
+  h+='<div style="margin-top:28px"><button class="linkbtn" data-a="reset">'+(pendReset?'Toque de novo para apagar tudo e recomeçar':'Restaurar dados de exemplo')+'</button></div>';
+  return h;
+}
+
+function vLotes(){
+  var h='<div class="head"><h1>Lotes</h1><button class="btn ghost sm" data-a="novoLote">Novo lote</button></div>';
+  h+='<div class="list" style="margin-top:14px">';
+  h+=S.lotes.map(function(l){
+    return '<button class="row" data-a="lote" data-id="'+l.id+'"><span class="row-n">'+saldo(l.id)+'</span><span class="row-main"><strong>'+esc(l.nome)+'</strong><span>'+esc(l.categoria)+' em '+esc(nomePasto(pastoDe(l.id)))+'</span><span>'+esc(resumoPeso(l.id))+'</span></span>'+IC.chev+'</button>';
+  }).join('');
+  h+='</div>';
+  return h;
+}
+
+function evRow(e,o){
+  var d=DELTA[e.tipo]?DELTA[e.tipo]*e.qtd:0;
+  var lt=lote(e.loteId);
+  var q=(d&&e.tipo!=='inicial')?'<div class="ev-q '+(d>0?'pos':'neg')+'">'+(d>0?'+':'−')+Math.abs(d)+'</div>':'';
+  var apagar='';
+  if(o.apagar&&e.tipo!=='inicial')apagar='<div><button class="linkbtn" data-a="del" data-id="'+e.id+'">'+(pendDel===e.id?'Toque de novo para apagar':'Apagar')+'</button></div>';
+  return '<li class="ev"><div class="ev-d">'+fmtData(e.data)+'</div><div class="ev-m">'+(o.lote&&lt?'<strong>'+esc(lt.nome)+'</strong>':'')+'<span'+(o.lote?'':' style="color:inherit;font-size:inherit"')+'>'+esc(descEv(e))+'</span>'+(e.obs?'<div class="sub">'+esc(e.obs)+'</div>':'')+apagar+'</div>'+q+'</li>';
+}
+
+function vLote(id){
+  var l=lote(id);if(!l)return vLotes();
+  var n=saldo(id),ps=pesagens(id),g=gmd(id);
+  var h='<button class="back" data-a="nav" data-v="lotes">'+IC.back+'Lotes</button>';
+  h+='<h1>'+esc(l.nome)+'</h1><p class="sub" style="margin:6px 0 0">'+esc(l.categoria)+' em '+esc(nomePasto(pastoDe(id)))+'</p>';
+  h+='<div class="saldo">'+n+'<small>'+(n===1?'cabeça':'cabeças')+'</small></div>';
+  if(ps.length){
+    var u=ps[ps.length-1];
+    h+='<dl class="stats"><div><dt>Peso médio</dt><dd>'+fmtNum(u.peso,Number.isInteger(u.peso)?0:1)+' kg</dd><small>pesado '+rel(u.data)+'</small></div>';
+    h+='<div><dt>Ganho por dia</dt><dd>'+(g!==null?fmtNum(g,2)+' kg':'–')+'</dd><small>'+(g!==null?'entre as duas últimas pesagens':'precisa de 2 pesagens')+'</small></div></dl>';
+  }else{
+    h+='<p class="hint">Este lote ainda não tem pesagem. Toque em Pesar para registrar a primeira.</p>';
+  }
+  var jp=janelaPartos(id);
+  if(jp){
+    h+='<h2>Partos</h2><p style="margin:6px 0 0">Previstos de <b>'+fmtDataAno(jp.ini)+'</b> a <b>'+fmtDataAno(jp.fim)+'</b>.</p>';
+    if(jp.esperado!==null){
+      h+='<div class="prog" aria-hidden="true"><span style="width:'+Math.min(100,jp.nasc/jp.esperado*100)+'%"></span></div>';
+      h+='<p class="hint">Nasceram '+jp.nasc+' de cerca de '+jp.esperado+' esperados.</p>';
+    }else{
+      h+='<p class="hint">Nasceram '+jp.nasc+' até agora. Registre o diagnóstico de gestação para o app estimar quantos partos esperar.</p>';
+    }
+  }
+  h+='<h2>Registrar neste lote</h2><div class="acoes">';
+  h+='<button class="btn" data-a="novo" data-t="pesagem" data-lote="'+id+'">Pesar</button>';
+  h+='<button class="btn" data-a="novo" data-t="venda" data-lote="'+id+'">Vender</button>';
+  h+='<button class="btn" data-a="novo" data-t="troca" data-lote="'+id+'">Mudar de potreiro</button>';
+  h+='<button class="btn" data-a="novo" data-t="vacina" data-lote="'+id+'">Vacina ou remédio</button>';
+  h+='<button class="btn ghost full" data-a="novo" data-t="" data-lote="'+id+'">Outro registro</button></div>';
+  h+='<h2>Histórico do lote</h2><ul class="list">';
+  h+=evLote(id).slice().reverse().map(function(e){return evRow(e,{lote:false,apagar:false});}).join('');
+  h+='</ul>';
+  return h;
+}
+
+function vHist(){
+  var h='<h1>Histórico</h1>';
+  h+='<div class="chips" style="margin-top:16px"><button class="chip" data-a="filtro" data-id="todos" aria-pressed="'+(filtro==='todos')+'">Todos</button>';
+  h+=S.lotes.map(function(l){return '<button class="chip" data-a="filtro" data-id="'+l.id+'" aria-pressed="'+(filtro===l.id)+'">'+esc(l.nome)+'</button>';}).join('')+'</div>';
+  var evs=S.eventos.filter(function(e){return filtro==='todos'||e.loteId===filtro;}).sort(cmp).reverse().slice(0,80);
+  h+='<ul class="list" style="margin-top:8px">'+evs.map(function(e){return evRow(e,{lote:true,apagar:true});}).join('')+'</ul>';
+  return h;
+}
+
+function newDraft(tipo,loteId){return {tipo:tipo||null,loteId:loteId||null,showAll:false,qtd:0,peso:'',produto:'',carencia:0,pastoId:null,pastoNovo:'',data:hoje(),fim:'',obs:'',erro:null};}
+
+function loteChips(sel,attr){
+  return '<div class="chips">'+S.lotes.map(function(l){
+    return '<button class="chip" data-a="'+attr+'" data-id="'+l.id+'" aria-pressed="'+(sel===l.id)+'">'+esc(l.nome)+'<small>'+saldo(l.id)+'</small></button>';
+  }).join('')+'</div>';
+}
+
+var TIPOS_COMUNS=['pesagem','venda','troca','vacina'];
+var TIPOS_RAROS=['monta','prenhez'];
+function tiposGrid(loteId,raros){
+  var comuns=Object.keys(TIPOS).filter(function(k){return TIPOS_RAROS.indexOf(k)===-1;});
+  var h='<div class="tipos">';
+  h+=comuns.map(function(k){return '<button class="tipo" data-a="tipo" data-t="'+k+'"><strong>'+TIPOS[k].nome+'</strong><span>'+TIPOS[k].dica+'</span></button>';}).join('');
+  h+='</div>';
+  h+='<p class="hint" style="margin-top:18px">Menos comuns</p><div class="tipos">';
+  h+=TIPOS_RAROS.map(function(k){return '<button class="tipo raro" data-a="tipo" data-t="'+k+'"><strong>'+TIPOS[k].nome+'</strong><span>'+TIPOS[k].dica+'</span></button>';}).join('');
+  h+='</div>';
+  return h;
+}
+function vRegistrar(){
+  if(!draft)draft=newDraft();
+  if(!draft.loteId){
+    var h='<h1>Registrar</h1><p class="sub" style="margin:6px 0 0">Qual lote?</p><div class="list" style="margin-top:14px">';
+    h+=S.lotes.map(function(l){return '<button class="row" data-a="regLote" data-id="'+l.id+'"><span class="row-n">'+saldo(l.id)+'</span><span class="row-main"><strong>'+esc(l.nome)+'</strong><span>'+esc(l.categoria)+' em '+esc(nomePasto(pastoDe(l.id)))+'</span></span>'+IC.chev+'</button>';}).join('');
+    return h+'</div>';
+  }
+  if(!draft.tipo){
+    var l0=draft.loteId,lt=lote(l0);
+    var h1='<button class="back" data-a="regTrocaLote">'+IC.back+'Mudar o lote</button>';
+    h1+='<h1>'+esc(lt.nome)+'</h1><p class="sub" style="margin:6px 0 0">O que aconteceu?</p>';
+    if(draft.showAll){
+      h1+=tiposGrid(l0);
+      return h1;
+    }
+    h1+='<div class="acoes" style="margin-top:16px">';
+    h1+='<button class="btn" data-a="novo" data-t="pesagem" data-lote="'+l0+'">Pesar</button>';
+    h1+='<button class="btn" data-a="novo" data-t="venda" data-lote="'+l0+'">Vender</button>';
+    h1+='<button class="btn" data-a="novo" data-t="troca" data-lote="'+l0+'">Mudar de potreiro</button>';
+    h1+='<button class="btn" data-a="novo" data-t="vacina" data-lote="'+l0+'">Vacina ou remédio</button>';
+    h1+='<button class="btn ghost full" data-a="novo" data-t="" data-lote="'+l0+'">Outro registro</button>';
+    h1+='</div>';
+    return h1;
+  }
+  var t=draft.tipo,T=TIPOS[t],l=draft.loteId,h2='';
+  h2+='<button class="back" data-a="trocaTipo">'+IC.back+'Mudar o tipo</button><h1>'+T.nome+'</h1>';
+  h2+='<p class="sub" style="margin:6px 0 0">'+esc(lote(l).nome)+'</p>';
+
+  if(t==='compra'||t==='nascimento'||t==='venda'||t==='morte'||t==='prenhez'){
+    h2+='<label class="lbl" for="f-qtd">'+(t==='nascimento'?'Quantos bezerros?':t==='prenhez'?'Quantas vacas estão prenhas?':'Quantas cabeças?')+'</label>';
+    h2+='<div class="stepper"><button class="round" data-a="delta" data-n="-1" aria-label="Diminuir">−</button><input id="f-qtd" class="qty" data-f="qtd" inputmode="numeric" pattern="[0-9]*" value="'+esc(draft.qtd)+'"><button class="round" data-a="delta" data-n="1" aria-label="Aumentar">+</button></div>';
+    h2+='<div class="chips quick">';
+    [5,10,20].forEach(function(n){h2+='<button class="chip" data-a="delta" data-n="'+n+'">+'+n+'</button>';});
+    if((t==='venda'||t==='morte'||t==='prenhez')&&l)h2+='<button class="chip" data-a="todas">Todas</button>';
+    h2+='<button class="chip" data-a="zerar">Zerar</button></div>';
+    if((t==='venda'||t==='morte'||t==='prenhez')&&l)h2+='<p class="hint">Este lote tem '+pl(saldo(l),'cabeça','cabeças')+'.</p>';
+  }
+  if(t==='troca'){
+    var atual=l?pastoDe(l):null;
+    h2+='<label class="lbl">Para qual potreiro?</label><div class="chips">';
+    h2+=S.pastos.map(function(p){return '<button class="chip" data-a="pickPasto" data-id="'+p.id+'" aria-pressed="'+(draft.pastoId===p.id)+'">'+esc(p.nome)+(p.id===atual?'<small>(atual)</small>':'')+'</button>';}).join('');
+    h2+='<button class="chip" data-a="pickPasto" data-id="novo" aria-pressed="'+(draft.pastoId==='novo')+'">Outro potreiro</button></div>';
+    if(draft.pastoId==='novo')h2+='<label class="lbl" for="f-pn">Nome do potreiro</label><input id="f-pn" class="input" data-f="pastoNovo" value="'+esc(draft.pastoNovo)+'" placeholder="Ex.: Potreiro da Serra">';
+  }
+  if(t==='pesagem'){
+    h2+='<label class="lbl" for="f-peso">Peso médio do lote</label><div class="suffix"><input id="f-peso" class="input" data-f="peso" inputmode="decimal" placeholder="Ex.: 340" value="'+esc(draft.peso)+'"><i>kg</i></div>';
+    var ps=l?pesagens(l):[];
+    if(ps.length){var u=ps[ps.length-1];h2+='<p class="hint">Última pesagem: '+fmtNum(u.peso,Number.isInteger(u.peso)?0:1)+' kg, '+rel(u.data)+'.</p>';}
+  }
+  if(t==='vacina'){
+    h2+='<label class="lbl" for="f-prod">Qual vacina ou remédio?</label><input id="f-prod" class="input" data-f="produto" value="'+esc(draft.produto)+'" placeholder="Ex.: Vermífugo">';
+    h2+='<div class="chips quick">'+['Vermífugo','Clostridiose','Brucelose','Carrapaticida'].map(function(p){return '<button class="chip" data-a="produto" data-v="'+p+'" aria-pressed="'+(draft.produto===p)+'">'+p+'</button>';}).join('')+'</div>';
+    h2+='<label class="lbl" for="f-car">Carência em dias</label><input id="f-car" class="input" data-f="carencia" inputmode="numeric" pattern="[0-9]*" value="'+esc(draft.carencia)+'">';
+    h2+='<div class="chips quick">'+[0,7,14,28,35].map(function(n){return '<button class="chip" data-a="carencia" data-n="'+n+'" aria-pressed="'+(Number(draft.carencia)===n)+'">'+(n===0?'Sem carência':n+' dias')+'</button>';}).join('')+'</div>';
+    h2+='<p class="hint">Carência é o prazo em que o animal não pode ir para o abate depois do remédio. O app avisa no início enquanto ela estiver valendo.</p>';
+  }
+  if(t==='monta'){
+    h2+='<label class="lbl" for="f-data">Início da monta ou data da inseminação</label><input id="f-data" type="date" class="input" data-f="data" value="'+esc(draft.data)+'">';
+    h2+='<label class="lbl" for="f-fim">Fim da monta (opcional)</label><input id="f-fim" type="date" class="input" data-f="fim" value="'+esc(draft.fim)+'">';
+    h2+='<p class="hint">Se foi uma inseminação de um dia só, deixe o fim em branco. O app conta cerca de '+GESTACAO+' dias de gestação a partir dessas datas.</p>';
+  }else{
+    h2+='<label class="lbl" for="f-data">Data</label><input id="f-data" type="date" class="input" data-f="data" value="'+esc(draft.data)+'">';
+  }
+  h2+='<label class="lbl" for="f-obs">Anotação (opcional)</label><input id="f-obs" class="input" data-f="obs" value="'+esc(draft.obs)+'" placeholder="Ex.: vendido para o frigorífico">';
+  if(draft.erro)h2+='<p class="erro" role="alert">'+esc(draft.erro)+'</p>';
+  h2+='<button class="btn salvar" data-a="salvar">'+T.botao+'</button>';
+  return h2;
+}
+
+function vNovoLote(){
+  var d=draftLote;
+  var h='<button class="back" data-a="nav" data-v="lotes">'+IC.back+'Lotes</button><h1>Novo lote</h1>';
+  h+='<label class="lbl" for="f-nl">Nome</label><input id="f-nl" class="input" data-f="nl-nome" value="'+esc(d.nome)+'" placeholder="Lote '+(S.lotes.length+1)+'">';
+  h+='<label class="lbl">Categoria</label><div class="chips">'+CATS.map(function(c){return '<button class="chip" data-a="nl-cat" data-v="'+c+'" aria-pressed="'+(d.categoria===c)+'">'+c+'</button>';}).join('')+'</div>';
+  h+='<label class="lbl">Em qual potreiro está?</label><div class="chips">'+S.pastos.map(function(p){return '<button class="chip" data-a="nl-pasto" data-id="'+p.id+'" aria-pressed="'+(d.pastoId===p.id)+'">'+esc(p.nome)+'</button>';}).join('')+'<button class="chip" data-a="nl-pasto" data-id="novo" aria-pressed="'+(d.pastoId==='novo')+'">Outro potreiro</button></div>';
+  if(d.pastoId==='novo')h+='<label class="lbl" for="f-npn">Nome do potreiro</label><input id="f-npn" class="input" data-f="nl-pastoNovo" value="'+esc(d.pastoNovo)+'" placeholder="Ex.: Potreiro da Serra">';
+  h+='<label class="lbl" for="f-nlq">Quantas cabeças?</label><div class="stepper"><button class="round" data-a="nl-delta" data-n="-1" aria-label="Diminuir">−</button><input id="f-nlq" class="qty" data-f="nl-qtd" inputmode="numeric" pattern="[0-9]*" value="'+esc(d.qtd)+'"><button class="round" data-a="nl-delta" data-n="1" aria-label="Aumentar">+</button></div>';
+  h+='<div class="chips quick">'+[5,10,20].map(function(n){return '<button class="chip" data-a="nl-delta" data-n="'+n+'">+'+n+'</button>';}).join('')+'</div>';
+  if(d.erro)h+='<p class="erro" role="alert">'+esc(d.erro)+'</p>';
+  h+='<button class="btn salvar" data-a="nl-salvar">Criar lote</button>';
+  return h;
+}
+
+/* ---------- desenhar ---------- */
+function render(keep){
+  var y=window.scrollY,h='';
+  switch(view){
+    case 'home':h=vHome();break;
+    case 'lotes':h=vLotes();break;
+    case 'lote':h=vLote(param);break;
+    case 'registrar':h=vRegistrar();break;
+    case 'hist':h=vHist();break;
+    case 'novoLote':h=vNovoLote();break;
+  }
+  $('#main').innerHTML=h;
+  $('#nav').innerHTML=vNav();
+  window.scrollTo(0,keep?y:0);
+  first=false;
+}
+function go(v,p){view=v;param=p||null;render(false);}
+
+var toastT;
+function toast(msg,undoId){
+  var el=$('#toast');
+  el.innerHTML='<span>'+esc(msg)+'</span>'+(undoId?'<button data-a="undo" data-id="'+undoId+'">Desfazer</button>':'');
+  el.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){el.hidden=true;},7000);
+}
+
+/* ---------- ações ---------- */
+function erro(m){draft.erro=m;render(true);}
+function addPasto(nome){var p={id:'p'+(S.pastos.length+1),nome:nome};S.pastos.push(p);return p.id;}
+
+function salvar(){
+  var t=draft.tipo,l=draft.loteId;
+  if(!l)return erro('Escolha o lote.');
+  var ev={tipo:t,loteId:l,data:draft.data||hoje()};
+  if(t==='compra'||t==='nascimento'||t==='venda'||t==='morte'||t==='prenhez'){
+    var q=Math.floor(num(draft.qtd));
+    if(!(q>=1))return erro(t==='prenhez'?'Informe quantas vacas estão prenhas.':'Informe quantas cabeças.');
+    if((t==='venda'||t==='morte'||t==='prenhez')&&q>saldo(l))return erro('O lote só tem '+pl(saldo(l),'cabeça','cabeças')+'.');
+    ev.qtd=q;
+  }
+  if(t==='monta'){
+    if(!draft.data)return erro('Informe a data de início.');
+    ev.data=draft.data;ev.fim=draft.fim||draft.data;
+    if(ev.fim<ev.data)return erro('O fim da monta não pode ser antes do início.');
+  }
+  var novoPasto=null;
+  if(t==='troca'){
+    var pid=draft.pastoId;
+    if(!pid)return erro('Escolha o potreiro de destino.');
+    if(pid==='novo'){
+      var nm=(draft.pastoNovo||'').trim();
+      if(!nm)return erro('Digite o nome do potreiro.');
+      pid=addPasto(nm);novoPasto=pid;
+    }
+    if(pid===pastoDe(l)){return erro('O lote já está nesse potreiro.');}
+    ev.pastoId=pid;
+  }
+  if(t==='pesagem'){
+    var p=num(draft.peso);
+    if(!(p>0))return erro('Informe o peso médio em kg.');
+    ev.peso=p;
+  }
+  if(t==='vacina'){
+    var pr=(draft.produto||'').trim();
+    if(!pr)return erro('Informe qual vacina ou remédio.');
+    ev.produto=pr;ev.carencia=Math.max(0,Math.floor(num(draft.carencia)));
+  }
+  if(draft.obs&&draft.obs.trim())ev.obs=draft.obs.trim();
+  ev.id=S.seq++;S.eventos.push(ev);persist();
+  var msg=TIPOS[t].ok+': '+lote(l).nome+'.';
+  draft=null;view='lote';param=l;render(false);toast(msg,ev.id);
+}
+
+function desfazer(id){
+  S.eventos=S.eventos.filter(function(e){return e.id!==id;});persist();
+  $('#toast').hidden=true;render(true);toast('Registro desfeito.');
+}
+
+function apagar(id){
+  var e=S.eventos.filter(function(x){return x.id===id;})[0];if(!e)return;
+  if(DELTA[e.tipo]>0&&saldo(e.loteId)-e.qtd<0){toast('Não dá para apagar: o lote ficaria com saldo negativo.');return;}
+  S.eventos=S.eventos.filter(function(x){return x.id!==id;});persist();toast('Registro apagado.');
+}
+
+function salvarLote(){
+  var d=draftLote;
+  var nome=(d.nome||'').trim()||('Lote '+(S.lotes.length+1));
+  var q=Math.floor(num(d.qtd));
+  if(!(q>=1)){d.erro='Informe quantas cabeças tem o lote.';return render(true);}
+  var pid=d.pastoId;
+  if(pid==='novo'){
+    var pn=(d.pastoNovo||'').trim();
+    if(!pn){d.erro='Digite o nome do potreiro.';return render(true);}
+    pid=addPasto(pn);
+  }
+  if(!pid){d.erro='Escolha o potreiro.';return render(true);}
+  var l={id:'l'+(S.lotes.length+1),nome:nome,categoria:d.categoria};
+  S.lotes.push(l);
+  S.eventos.push({id:S.seq++,tipo:'inicial',loteId:l.id,data:hoje(),qtd:q,pastoId:pid});
+  persist();draftLote=null;view='lote';param=l.id;render(false);toast('Lote criado: '+nome+'.');
+}
+
+document.addEventListener('click',function(ev){
+  var el=ev.target.closest('[data-a]');if(!el)return;
+  var a=el.dataset.a,d=el.dataset;
+  switch(a){
+    case 'nav':
+      if(d.v==='registrar')draft=newDraft();
+      go(d.v);break;
+    case 'lote':go('lote',d.id);break;
+    case 'novo':draft=newDraft(d.t||null,d.lote||null);if(!d.t)draft.showAll=true;go('registrar');break;
+    case 'regLote':draft.loteId=d.id;render(false);break;
+    case 'regTrocaLote':draft.loteId=null;draft.tipo=null;draft.showAll=false;render(false);break;
+    case 'tipo':draft.tipo=d.t;draft.erro=null;render(false);break;
+    case 'trocaTipo':draft.tipo=null;draft.erro=null;render(false);break;
+    case 'pickLote':draft.loteId=d.id;draft.erro=null;render(true);break;
+    case 'delta':draft.qtd=Math.max(0,(Math.floor(num(draft.qtd))||0)+Number(d.n));render(true);break;
+    case 'zerar':draft.qtd=0;render(true);break;
+    case 'todas':draft.qtd=saldo(draft.loteId);render(true);break;
+    case 'pickPasto':draft.pastoId=d.id;draft.erro=null;render(true);break;
+    case 'produto':draft.produto=d.v;render(true);break;
+    case 'carencia':draft.carencia=Number(d.n);render(true);break;
+    case 'salvar':salvar();break;
+    case 'undo':desfazer(Number(d.id));break;
+    case 'filtro':filtro=d.id;render(true);break;
+    case 'del':{
+      var id=Number(d.id);
+      if(pendDel===id){pendDel=null;apagar(id);render(true);}
+      else{pendDel=id;render(true);setTimeout(function(){if(pendDel===id){pendDel=null;if(view==='hist')render(true);}},4000);}
+      break;}
+    case 'novoLote':draftLote={nome:'',categoria:'Novilhos',pastoId:S.pastos.length?S.pastos[0].id:'novo',pastoNovo:'',qtd:10,erro:null};go('novoLote');break;
+    case 'nl-cat':draftLote.categoria=d.v;render(true);break;
+    case 'nl-pasto':draftLote.pastoId=d.id;render(true);break;
+    case 'nl-delta':draftLote.qtd=Math.max(0,(Math.floor(num(draftLote.qtd))||0)+Number(d.n));render(true);break;
+    case 'nl-salvar':salvarLote();break;
+    case 'reset':
+      if(pendReset){pendReset=false;S=seed();persist();render(true);toast('Dados de exemplo restaurados.');}
+      else{pendReset=true;render(true);setTimeout(function(){if(pendReset){pendReset=false;if(view==='home')render(true);}},4000);}
+      break;
+  }
+});
+
+document.addEventListener('input',function(ev){
+  var f=ev.target.dataset&&ev.target.dataset.f;if(!f)return;
+  if(f.indexOf('nl-')===0){draftLote[f.slice(3)]=ev.target.value;}
+  else if(draft){draft[f]=ev.target.value;}
+});
+
+render(false);
+})();
+</script>
+</body>
+</html>
