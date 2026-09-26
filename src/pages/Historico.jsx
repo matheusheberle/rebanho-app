@@ -1,3 +1,4 @@
+import AcoesRegistro from '../components/AcoesRegistro.jsx';
 import React, { useState } from 'react';
 import { Chip, EmptyState, Icon, PageTitle } from '../components/UI.jsx';
 import { TIPOS, dataFormatada, nomePasto, numero } from '../lib/apresentacao.js';
@@ -11,19 +12,20 @@ function descricao(e, pastos) {
   return `${TIPOS[e.tipo]?.nome || e.tipo}${e.qtd != null ? `: ${numero(e.qtd)} ${e.tipo === 'prenhez' ? 'vacas prenhas' : 'cabeças'}` : ''}`;
 }
 
-export function ListaEventos({ eventos, lotes, pastos, mostrarLote = true }) {
+export function ListaEventos({ eventos, lotes, pastos, mostrarLote = true, navegar, avisar }) {
   const ordenados = [...eventos].sort((a, b) => b.data.localeCompare(a.data) || b.id.localeCompare(a.id));
   if (!ordenados.length) return <EmptyState icon="historico" title="Nenhum registro encontrado"><p>Os acontecimentos registrados aparecerão aqui.</p></EmptyState>;
   return <ul className="list event-list">{ordenados.map(e => <li className="ev" key={e.id}>
     <span className="event-icon"><Icon nome={e.tipo} size={21} /></span>
     <time className="ev-d" dateTime={e.data}>{dataFormatada(e.data).slice(0, 5)}</time>
     <div className="ev-m">{mostrarLote && <strong>{lotes.find(l => l.id === e.loteId)?.nome || 'Lote não encontrado'}</strong>}<span>{descricao(e, pastos)}</span>{e.obs && <div className="sub">{e.obs}</div>}</div>
+    {e.tipo !== 'inicial' ? <AcoesRegistro tabela="eventos" registro={e} avisar={avisar} editar={() => navegar('registrar', e.loteId, e.tipo, e)} /> : <small className="hint" title="Faz parte da criação do lote; não pode ser excluído diretamente.">Criação do lote</small>}
   </li>)}</ul>;
 }
 
-export default function Historico({ lotes, eventos, pastos }) {
+export default function Historico({ lotes, eventos, pastos, navegar, avisar }) {
   const [filtro, setFiltro] = useState('todos');
   return <><PageTitle icon="historico">Histórico</PageTitle><p className="sub subtitle">Acompanhe o que aconteceu no rebanho.</p><div className="chips page-list"><Chip ativo={filtro === 'todos'} onClick={() => setFiltro('todos')}>Todos</Chip>{lotes.map(l => <Chip key={l.id} ativo={filtro === l.id} onClick={() => setFiltro(l.id)}>{l.nome}</Chip>)}</div>
-    <ListaEventos eventos={eventos.filter(e => filtro === 'todos' || e.loteId === filtro)} lotes={lotes} pastos={pastos} />
+    <ListaEventos navegar={navegar} avisar={avisar} eventos={eventos.filter(e => filtro === 'todos' || e.loteId === filtro)} lotes={lotes} pastos={pastos} />
   </>;
 }

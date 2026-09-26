@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+
+export async function testarCategorias({ command, evaluate, until, click, fill }) {
+  const chip = nome => evaluate(`([...document.querySelectorAll('.category-picker .chip')].find(b=>b.textContent.replace('✓','').trim()===${JSON.stringify(nome)})).click()`);
+  await click('Lotes'); await click('Novo lote');
+  await fill('lote-nome','Categoria única'); await fill('quantidade','5');
+  await chip('Novilhos'); await click('Criar lote');
+  await until(`document.querySelector('.erro')?.textContent.includes('pelo menos uma')`);
+  await chip('Bois'); await click('Criar lote');
+  await until(`document.querySelector('h1')?.textContent==='Categoria única'`);
+  assert.ok((await evaluate(`document.querySelector('.lote-summary').textContent`)).includes('Bois'));
+  await click('Lotes'); await click('Novo lote');
+  await fill('lote-nome','Lote misto'); await fill('quantidade','100');
+  await chip('Novilhos'); await chip('Vacas'); await chip('Bezerros');
+  assert.equal(await evaluate(`document.querySelectorAll('.category-picker .chip[aria-pressed="true"]').length`),2);
+  await click('Criar lote');
+  await until(`document.querySelector('h1')?.textContent==='Lote misto'`);
+  assert.match(await evaluate(`document.querySelector('.lote-summary').textContent`),/Vacas · Bezerros/);
+  const original = await evaluate(`(async()=>{const {db}=await import('/src/lib/db.js'); return (await db.lotes.toArray()).find(l=>l.nome==='Lote misto');})()`);
+  await evaluate(`document.querySelector('.lote-summary [aria-label="Editar registro"]').click()`);
+  await until(`!!document.querySelector('#lote-nome')`);
+  assert.equal(await evaluate(`document.querySelectorAll('.category-picker .chip[aria-pressed="true"]').length`),2);
+  await chip('Vacas'); await chip('Bezerros'); await click('Salvar lote');
+  await until(`document.querySelector('.erro')?.textContent.includes('pelo menos uma')`);
+  await chip('Bois'); await chip('Novilhos'); await click('Salvar lote');
+  await until(`document.querySelector('h1')?.textContent==='Lote misto'`);
+  const editado = await evaluate(`(async()=>{const {db}=await import('/src/lib/db.js'); return await db.lotes.get(${JSON.stringify(original.id)});})()`);
+  assert.deepEqual(editado.categorias,['Bois','Novilhos']);
+  assert.ok(Date.parse(editado.atualizadoEm)>Date.parse(original.atualizadoEm));
+  await click('Lotes');
+  assert.ok((await evaluate(`document.querySelector('main').textContent`)).includes('Bois · Novilhos'));
+  await click('Início');
+  await until(`document.querySelector('.tag-num')?.textContent==='118'`);
+  assert.equal(await evaluate(`!!document.querySelector('.bar')`),false);
+  assert.match(await evaluate(`document.querySelector('[aria-label="Categorias presentes"]').textContent`),/Sem divisão/);
+  await command('Page.reload');
+  await until(`document.querySelector('.tag-num')?.textContent==='118'`);
+  await click('Lotes');
+  await evaluate(`([...document.querySelectorAll('main .row')].find(e=>e.textContent.includes('Lote misto'))).click()`);
+  await evaluate(`document.querySelector('.lote-summary [aria-label="Excluir registro"]').click()`);
+  await click('Excluir lote');
+  await until(`document.querySelector('.toast')?.textContent.includes('Registro excluído')`);
+  await click('Início'); await until(`document.querySelector('.tag-num')?.textContent==='18'`);
+  await click('Desfazer'); await until(`document.querySelector('.tag-num')?.textContent==='118'`);
+  console.log('PASS categorias: uma/duas categorias, obrigatoriedade, edição mesmo ID, chips acessíveis, listagem, recarga, Home sem duplicação, exclusão e desfazer.');
+}

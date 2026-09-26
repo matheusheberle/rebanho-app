@@ -9,6 +9,8 @@ import { createServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { testarClimaEChuva } from './weather-smoke.mjs';
 import { testarSincronizacao } from './sync-smoke.mjs';
+import { testarManutencao } from './maintenance-smoke.mjs';
+import { testarCategorias } from './categories-smoke.mjs';
 
 const browserPath = process.env.BROWSER_PATH || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const profile = await mkdtemp(join(tmpdir(), 'rebanho-smoke-'));
@@ -105,12 +107,18 @@ try {
     const antigo = new Dexie('rebanho');
     antigo.version(1).stores({pastos:'id, nome', lotes:'id, nome, categoria', eventos:'id, loteId, tipo, data, pastoId, [loteId+data]', fila_sync:'++seq, tabela, registroId, criadoEm'});
     await antigo.pastos.put({id:'migracao-pasto', nome:'Pasto existente'});
-    await antigo.lotes.put({id:'migracao-lote', nome:'Lote existente', categoria:'Bois'});
+    await antigo.lotes.put({id:'migracao-lote', nome:'Lote existente', categoria:'Bois', criadoEm:'2024-01-01T00:00:00Z', atualizadoEm:'2025-01-01T00:00:00Z', excluidoEm:'2025-01-01T00:00:00Z'});
     await antigo.eventos.put({id:'migracao-evento', loteId:'migracao-lote', pastoId:'migracao-pasto', tipo:'inicial', qtd:7, data:'2026-01-01'});
     await antigo.fila_sync.add({tabela:'lotes', registroId:'migracao-lote', criadoEm:'2026-01-01T00:00:00Z'});
     antigo.close();
+    const versao2 = new Dexie('rebanho');
+    versao2.version(1).stores({pastos:'id, nome', lotes:'id, nome, categoria', eventos:'id, loteId, tipo, data, pastoId, [loteId+data]', fila_sync:'++seq, tabela, registroId, criadoEm'});
+    versao2.version(2).stores({chuvas:'id, data, mm',configuracoes:'chave',clima_cache:'chave'});
+    await versao2.open(); versao2.close();
     const {db} = await import('/src/lib/db.js');
     await db.open();
+    const loteMigrado = await db.lotes.get('migracao-lote');
+    if (JSON.stringify(loteMigrado.categorias)!=='["Bois"]' || loteMigrado.atualizadoEm!=='2025-01-01T00:00:00Z' || loteMigrado.excluidoEm!=='2025-01-01T00:00:00Z') throw new Error('Migração de categorias alterou dados legados');
     const resultado = {versao:db.verno, nome:(await db.lotes.get('migracao-lote')).nome, qtd:(await db.eventos.get('migracao-evento')).qtd, pastos:await db.pastos.count(), fila:await db.fila_sync.count(), chuvas:await db.chuvas.count()};
     await db.transaction('rw', db.lotes, db.eventos, db.pastos, db.fila_sync, async () => {
       await db.lotes.clear(); await db.eventos.clear(); await db.pastos.clear(); await db.fila_sync.clear();
@@ -118,7 +126,7 @@ try {
     db.close();
     return resultado;
   })()`);
-  assert.deepEqual(migracao, {versao:2, nome:'Lote existente', qtd:7, pastos:1, fila:1, chuvas:0});
+  assert.deepEqual(migracao, {versao:3, nome:'Lote existente', qtd:7, pastos:1, fila:1, chuvas:0});
   await command('Page.navigate', { url: 'http://127.0.0.1:5197' });
   await until(`document.body.textContent.includes('Criar primeiro lote')`);
   assert.equal(await evaluate(`document.querySelector('.tag-num').textContent`), '0');
@@ -178,6 +186,8 @@ try {
   await until(`document.querySelector('.tag-num')?.textContent === '10'`);
   await testarClimaEChuva({ command, evaluate, until, click, fill });
   await testarSincronizacao({ evaluate, until });
+  await testarManutencao({ command, evaluate, until, click, fill });
+  await testarCategorias({ command, evaluate, until, click, fill });
   assert.deepEqual(runtimeErrors, [], 'Sem exceções no navegador');
   const screenshot = await command('Page.captureScreenshot', { format: 'png' });
   await writeFile(join(tmpdir(), 'rebanho-smoke.png'), Buffer.from(screenshot.data, 'base64'));

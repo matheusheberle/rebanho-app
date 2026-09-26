@@ -360,3 +360,22 @@ legend.lbl { padding-top: 28px; }
   .rain-stats > div:first-child dd { font-size: 30px; }
   .rain-stats dd { font-size: 25px; }
 }
+/* Manutenção: ações discretas, confirmação acessível e áreas de toque. */
+.record-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.record-actions > button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.confirm-dialog { color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 18px; padding: 24px; width: min(420px, calc(100% - 32px)); margin: auto; }
+.confirm-dialog::backdrop { background: rgb(0 0 0 / .55); }
+.confirm-dialog p { margin: 16px 0; line-height: 1.5; }
+.dialog-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.dialog-actions > button { flex: 1; }
+.rain-readings { margin-top: 20px; }
+.rain-readings summary { cursor: pointer; min-height: 44px; padding: 12px 0; font-weight: 600; }
+.reading-row { display: flex; justify-content: space-between; gap: 8px; padding: 14px 0; align-items: center; }
+.reading-row > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+.sync-status { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.sync-status .linkbtn { min-height: 44px; padding: 4px 8px; font-size: inherit; }
+.event-list .ev { flex-wrap: wrap; }
+.event-list .record-actions, .event-list .ev > small { grid-column: 2 / -1; margin-left: auto; }
+.sync-status::before { display: none; }
+select.input { font: inherit; color: var(--ink); }
+.toast { flex-wrap: wrap; }

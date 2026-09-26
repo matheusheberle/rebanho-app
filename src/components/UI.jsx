@@ -1,4 +1,5 @@
 import React from 'react';
+import { categoriasDoLote } from '../lib/categorias.js';
 import { saldoDoLote, pastoAtualDoLote, pesagensDoLote, ganhoMedioDiario } from '../lib/calc.js';
 import { nomePasto, numero } from '../lib/apresentacao.js';
 import Icon from './Icon.jsx';
@@ -50,7 +51,7 @@ export function LinhaLote({ lote, eventos, pastos, onClick }) {
   return <button className="row lote-row" onClick={onClick}>
     <span className="lote-count"><span className="row-n">{numero(saldoDoLote(lote.id, eventos))}</span><small>cabeças</small></span>
     <span className="row-main"><strong>{lote.nome}</strong>
-      <span className="category-label">{lote.categoria}</span>
+      <span className="category-label">{categoriasDoLote(lote).join(' · ')}</span>
       <span className="row-meta"><Icon nome="localizacao" size={16} />{nomePasto(pastoAtualDoLote(lote.id, eventos), pastos)}</span>
       <span className="row-meta"><Icon nome="pesagem" size={16} />{ultima ? `${numero(ultima.peso, 1)} kg${ganho !== null ? ` · ${numero(ganho, 2)} kg/dia` : ''}` : 'Ainda sem pesagem'}</span>
     </span><Icon nome="chev" />

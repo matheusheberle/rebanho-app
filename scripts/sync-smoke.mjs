@@ -41,6 +41,15 @@ export async function testarSincronizacao({ evaluate, until }) {
       conferir((await b.eventos.get(inicial)).pastoId === pasto, 'Conversão de chaves estrangeiras');
       igual(nuvem.chamadas.filter(c=>c.tipo==='rpc').map(c=>c.tabela), ['pastos','lotes','eventos'], 'Ordem das dependências');
       fases.push('A');
+      onlineA=false; relogio+=1000;
+      await sA.salvarRegistro('lotes',{id:lote,categorias:['Vacas','Bezerros']});
+      onlineA=true; await sA.sincronizarTudo(); await sB.sincronizarTudo();
+      igual((await b.lotes.get(lote)).categorias,['Vacas','Bezerros'],'Categorias A → B');
+      relogio+=1000;
+      await sB.salvarRegistro('lotes',{id:lote,categorias:['Vacas','Touros']});
+      await sB.sincronizarTudo(); await sA.sincronizarTudo();
+      igual((await a.lotes.get(lote)).categorias,['Vacas','Touros'],'Categorias B → A');
+      conferir(doSupabase('lotes',{id:'legado',categoria:'Bois'}).categorias[0]==='Bois','Conversão de categoria legada');
 
       const peso = crypto.randomUUID();
       onlineB = false; relogio += 1000;
@@ -119,6 +128,33 @@ export async function testarSincronizacao({ evaluate, until }) {
       await sA.sincronizarTudo(); await sB.sincronizarTudo();
       conferir((await a.lotes.get(lote)).nome === 'Concorrente B' && (await b.lotes.get(lote)).nome === 'Concorrente B', 'Dois envios concorrentes convergem');
 
+      // Soft delete e restauração atravessam a nuvem; edição antiga perde.
+      onlineA = false; onlineB = false;
+      relogio += 1000; await sB.salvarRegistro('eventos',{id:peso,peso:345});
+      relogio += 1000; await sA.salvarRegistro('eventos',{id:peso,excluidoEm:new Date(relogio).toISOString()});
+      onlineA = true; onlineB = true;
+      await sA.sincronizarTudo(); await sB.sincronizarTudo();
+      conferir((await b.eventos.get(peso)).excluidoEm, 'F/M: exclusão mais recente vence edição antiga no B');
+      conferir(nuvem.tabelas.eventos.get(peso).excluido_em, 'Tombstone na nuvem');
+      relogio += 1000;
+      await sB.salvarRegistro('eventos',{id:peso,excluidoEm:null,peso:350});
+      await sB.sincronizarTudo(); await sA.sincronizarTudo();
+      conferir(!(await a.eventos.get(peso)).excluidoEm && (await a.eventos.get(peso)).peso===350, 'G: restauração explícita chega no A');
+
+      // UUIDs diferentes, mesma data, criados offline nos dois aparelhos.
+      onlineA=false; onlineB=false; relogio+=1000;
+      const chuvaA=crypto.randomUUID(), chuvaB=crypto.randomUUID();
+      await sA.salvarRegistro('chuvas',{id:chuvaA,data:'2026-09-27',mm:10});
+      await sB.salvarRegistro('chuvas',{id:chuvaB,data:'2026-09-27',mm:20});
+      onlineA=true; onlineB=true;
+      await sA.sincronizarTudo(); await sB.sincronizarTudo();
+      conferir(sB.getSyncStatus().estado==='erro' && await b.fila_sync.count()===1, 'Colisão de chuva não perde a leitura offline');
+      conferir((await b.chuvas.where('data').equals('2026-09-27').toArray()).length===2, 'Ambas as leituras disponíveis para decisão explícita');
+      relogio+=1000;
+      await sB.salvarRegistro('chuvas',{id:chuvaB,excluidoEm:new Date(relogio).toISOString()});
+      await sB.sincronizarTudo(); await sA.sincronizarTudo();
+      conferir((await a.chuvas.get(chuvaB)).excluidoEm && await b.fila_sync.count()===0, 'Resolução de duplicidade sincronizada');
+
       // Campos antigos: data de fila, não hora do download.
       const legado = crypto.randomUUID();
       await a.lotes.put({id:legado,nome:'Legado offline',categoria:'Bois'});
@@ -153,6 +189,6 @@ export async function testarSincronizacao({ evaluate, until }) {
     window.dispatchEvent(new Event('online'));
   })()`);
   await until(`document.querySelector('.tag-num')?.textContent === '14'`);
-  await until(`document.querySelector('.sync-status')?.textContent === 'Sincronizado'`);
+  await until(`document.querySelector('.sync-state')?.textContent === 'Sincronizado'`);
   console.log('PASS: dois aparelhos, retorno offline, conflitos, falhas, concorrência, edição durante envio, legados e paginação > 1000 registros.');
 }

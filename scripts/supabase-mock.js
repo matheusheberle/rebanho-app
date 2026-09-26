@@ -19,7 +19,10 @@ export function criarSupabaseMock({ permitir = () => true, limiteServidor = Infi
           || (registro.pasto_id && !tabelas.pastos.has(registro.pasto_id)))) return erro();
         const atual = tabelas[tabela].get(registro.id);
         if (!atual || timestamp(registro) > timestamp(atual)) {
-          tabelas[tabela].set(registro.id, { ...copiar(registro), criado_em: atual?.criado_em || registro.criado_em });
+          if (tabela === 'chuvas' && !registro.excluido_em && [...tabelas.chuvas.values()].some(r => r.id !== registro.id && r.data === registro.data && !r.excluido_em))
+            return { data: null, error: { message: 'Já existe uma leitura ativa nesta data. Confira as leituras de chuva no aplicativo.' } };
+          tabelas[tabela].set(registro.id, { ...copiar(registro), criado_em: atual?.criado_em || registro.criado_em,
+            excluido_em: Object.hasOwn(registro, 'excluido_em') ? registro.excluido_em : atual?.excluido_em ?? null });
         }
         return { data: copiar(tabelas[tabela].get(registro.id)), error: null };
       } };

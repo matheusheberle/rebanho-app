@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import { normalizarLote } from './categorias.js';
 import { TABELAS_SYNC, validarTabela, normalizarRegistro, versao, compararVersoes, paraSupabase, doSupabase, mesmoConteudo } from './sync-records.js';
 
 // As dependências permitem testar dois aparelhos com bancos Dexie independentes.
@@ -40,7 +41,9 @@ export function criarSincronizador({ db, cliente, online = () => navigator.onLin
       // Monotônico por registro, inclusive em edições no mesmo milissegundo.
       const atualizadoEm = new Date(Math.max(agora(), anterior ? versao(anterior) + 1 : 0)).toISOString();
       const criadoEm = anterior?.criadoEm || registro.criadoEm || instante;
-      await db.table(tabela).put({ ...anterior, ...registro, criadoEm, atualizadoEm });
+      const excluidoEm = registro.excluidoEm === undefined ? anterior?.excluidoEm ?? null : registro.excluidoEm;
+      const novo = { ...anterior, ...registro, criadoEm, atualizadoEm, excluidoEm };
+      await db.table(tabela).put(tabela === 'lotes' ? normalizarLote(novo) : novo);
       await db.fila_sync.add({ tabela, registroId: registro.id, criadoEm: atualizadoEm });
     });
     // Uma transação externa pode agrupar pasto, lote e evento inicial.
@@ -89,6 +92,12 @@ export function criarSincronizador({ db, cliente, online = () => navigator.onLin
     // Pais antes dos eventos, mesmo quando a fila veio de uma versão antiga.
     for (const tabela of TABELAS_SYNC) {
       const ids = [...new Set(fila.filter(p => p.tabela === tabela).map(p => p.registroId))];
+      // Libera a data de leituras excluídas antes de enviar sua substituta.
+      if (tabela === 'chuvas') {
+        const registros = await db.chuvas.bulkGet(ids);
+        const excluidos = new Set(registros.filter(r => r?.excluidoEm).map(r => r.id));
+        ids.sort((a, b) => Number(excluidos.has(b)) - Number(excluidos.has(a)));
+      }
       for (const id of ids) {
         const snapshot = await db.transaction('rw', db.table(tabela), db.fila_sync, async () => {
           const pendencias = await db.fila_sync.where('registroId').equals(id).filter(p => p.tabela === tabela).toArray();

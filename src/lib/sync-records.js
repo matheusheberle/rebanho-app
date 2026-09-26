@@ -1,12 +1,13 @@
+import { normalizarLote } from './categorias.js';
 export const TABELAS_SYNC = ['pastos', 'lotes', 'eventos', 'chuvas'];
-const BASE = ['id', 'criadoEm', 'atualizadoEm'];
+const BASE = ['id', 'criadoEm', 'atualizadoEm', 'excluidoEm'];
 const CAMPOS = {
   pastos: [...BASE, 'nome'],
-  lotes: [...BASE, 'nome', 'categoria'],
+  lotes: [...BASE, 'nome', 'categoria', 'categorias'],
   eventos: [...BASE, 'loteId', 'tipo', 'data', 'qtd', 'peso', 'produto', 'carencia', 'pastoId', 'fim', 'obs'],
   chuvas: [...BASE, 'data', 'mm', 'obs']
 };
-const NOMES = { loteId: 'lote_id', pastoId: 'pasto_id', criadoEm: 'criado_em', atualizadoEm: 'atualizado_em' };
+const NOMES = { excluidoEm: 'excluido_em', loteId: 'lote_id', pastoId: 'pasto_id', criadoEm: 'criado_em', atualizadoEm: 'atualizado_em' };
 const EPOCA = '1970-01-01T00:00:00.000Z';
 
 export function validarTabela(tabela) {
@@ -43,17 +44,19 @@ export function compararVersoes(a, b, pendenciasB) {
 
 export function paraSupabase(tabela, registro) {
   validarTabela(tabela);
-  const normalizado = normalizarRegistro(registro);
+  const normalizado = normalizarRegistro(tabela === 'lotes' ? normalizarLote(registro) : registro);
   return Object.fromEntries(CAMPOS[tabela].map(campo => [NOMES[campo] || campo, normalizado[campo] ?? null]));
 }
 
 export function doSupabase(tabela, registro) {
   validarTabela(tabela);
   if (!registro || typeof registro.id !== 'string') throw new Error('Registro remoto inválido.');
-  return normalizarRegistro(Object.fromEntries(CAMPOS[tabela].map(campo => [campo, registro[NOMES[campo] || campo] ?? null])));
+  const local = Object.fromEntries(CAMPOS[tabela].map(campo => [campo, registro[NOMES[campo] || campo] ?? null]));
+  return normalizarRegistro(tabela === 'lotes' ? normalizarLote(local) : local);
 }
 
 export function mesmoConteudo(tabela, a, b) {
+  if (tabela === 'lotes') { a = normalizarLote(a); b = normalizarLote(b); }
   return CAMPOS[tabela].filter(c => c !== 'criadoEm' && c !== 'atualizadoEm')
-    .every(c => (a[c] ?? null) === (b[c] ?? null));
+    .every(c => c === 'categorias' ? JSON.stringify(a[c]) === JSON.stringify(b[c]) : (a[c] ?? null) === (b[c] ?? null));
 }

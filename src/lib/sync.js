@@ -12,11 +12,13 @@ export function iniciarSincronizacao() {
   const aoFicarOnline = () => { void sincronizarTudo(); };
   const aoFicarOffline = () => sincronizador.marcarOffline();
   const aoVoltar = () => { if (document.visibilityState === 'visible') void sincronizarTudo(); };
+  window.addEventListener('focus', aoVoltar);
   window.addEventListener('online', aoFicarOnline);
   window.addEventListener('offline', aoFicarOffline);
   document.addEventListener('visibilitychange', aoVoltar);
   void sincronizarTudo();
   return () => {
+    window.removeEventListener('focus', aoVoltar);
     window.removeEventListener('online', aoFicarOnline);
     window.removeEventListener('offline', aoFicarOffline);
     document.removeEventListener('visibilitychange', aoVoltar);

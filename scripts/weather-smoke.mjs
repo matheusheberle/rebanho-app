@@ -49,7 +49,7 @@ export async function testarClimaEChuva({ command, evaluate, until, click, fill 
   await evaluate(`(async () => {
     const {salvarRegistro} = await import('/src/lib/sync.js');
     const {hojeISO} = await import('/src/lib/apresentacao.js');
-    for (const [dias, mm] of [[0,0],[-6,23.5],[-7,2],[-29,84.5],[-30,1000],[1,1000]]) {
+    for (const [dias, mm] of [[-1,0],[-6,23.5],[-7,2],[-29,84.5],[-30,1000],[1,1000]]) {
       const data = new Date(hojeISO()+'T12:00:00Z'); data.setUTCDate(data.getUTCDate()+dias);
       await salvarRegistro('chuvas', {id:crypto.randomUUID(), data:data.toISOString().slice(0,10), mm, criadoEm:new Date().toISOString()});
     }

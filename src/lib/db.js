@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import { normalizarLote } from './categorias.js';
 
 // Banco local no aparelho. É nele que o app lê e grava no dia a dia,
 // mesmo sem internet. A sincronização com o Supabase (nuvem) roda
@@ -25,3 +26,8 @@ db.version(2).stores({
 export function novoId() {
   return crypto.randomUUID();
 }
+
+// Migração somente de conteúdo; preserva IDs, timestamps, fila e tombstones.
+db.version(3).stores({ lotes: 'id, nome, categoria' }).upgrade(tx =>
+  tx.table('lotes').toCollection().modify(lote => Object.assign(lote, normalizarLote(lote)))
+);

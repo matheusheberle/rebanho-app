@@ -13,6 +13,10 @@ import NovoLote from './pages/NovoLote.jsx';
 import RegistrarChuva from './pages/RegistrarChuva.jsx';
 import ConfigurarLocalizacao from './pages/ConfigurarLocalizacao.jsx';
 import './styles/app.css';
+import { dadosAtivos } from './lib/manutencao.js';
+import EditarLote from './pages/EditarLote.jsx';
+import { sincronizarTudo } from './lib/sync.js';
+import { Cloud, CloudOff, RefreshCw, CircleAlert } from 'lucide-react';
 
 export default function App() {
   const [rota, setRota] = useState({ pagina: 'home', loteId: null, tipo: null, chave: 0 });
@@ -42,21 +46,22 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [aviso]);
 
-  function navegar(pagina, loteId = null, tipo = null) {
-    setRota(anterior => ({ pagina, loteId, tipo, chave: anterior.chave + 1 }));
+  function navegar(pagina, loteId = null, tipo = null, registroEdicao = null) {
+    setRota(anterior => ({ pagina, loteId, tipo, registroEdicao, chave: anterior.chave + 1 }));
   }
-  const paginas = { home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
+  const paginas = { editarLote: EditarLote, home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
   const Pagina = paginas[rota.pagina] || Home;
-  const mensagens = { offline: 'Offline · dados neste aparelho', sincronizando: 'Sincronizando…', sincronizado: 'Sincronizado', erro: 'Não foi possível sincronizar · dados neste aparelho' };
+  const mensagens = { offline: 'Offline · dados neste aparelho', sincronizando: 'Sincronizando…', sincronizado: 'Sincronizado', erro: 'Erro ao sincronizar' };
   const status = !supabaseConfigurado ? 'Dados neste aparelho · nuvem não configurada'
     : `${mensagens[sync.estado]}${sync.conflitos ? ` · ${sync.conflitos} atualização(ões) remota(s) prevaleceram` : ''}`;
 
+  const SyncIcon = { offline: CloudOff, sincronizando: RefreshCw, sincronizado: Cloud, erro: CircleAlert }[sync.estado];
   return <div className="app">
-    <div className="sync-status" role="status" title={sync.erro || undefined}>{status}</div>
+    <div className="sync-status" role="status" title={sync.erro || undefined}>{<SyncIcon size={15} />}<span className="sync-state">{status}</span>{supabaseConfigurado && <button className="linkbtn" disabled={sync.estado === 'sincronizando'} onClick={() => void sincronizarTudo()}>Sincronizar agora</button>}</div>
     <main ref={main} tabIndex={-1}>
-      {erro ? <p className="erro" role="alert">{erro}</p> : !dados ? <p role="status">Carregando rebanho…</p> : <Pagina key={rota.chave} {...dados} loteId={rota.loteId} tipoInicial={rota.tipo} navegar={navegar} avisar={setAviso} />}
+      {erro ? <p className="erro" role="alert">{erro}</p> : !dados ? <p role="status">Carregando rebanho…</p> : <Pagina key={rota.chave} {...dadosAtivos(dados)} registroEdicao={rota.registroEdicao} loteId={rota.loteId} tipoInicial={rota.tipo} navegar={navegar} avisar={setAviso} />}
     </main>
     <BottomNav pagina={rota.pagina} navegar={navegar} />
-    {aviso && <div className="toast" role="status"><span>{aviso}</span><button onClick={() => setAviso('')}>Fechar</button></div>}
+    {aviso && <div className="toast" role="status"><span>{typeof aviso === 'string' ? aviso : aviso.texto}</span>{aviso.acao && <button onClick={() => { const acao = aviso.acao; setAviso(''); void acao(); }}>Desfazer</button>}<button onClick={() => setAviso('')}>Fechar</button></div>}
   </div>;
 }
