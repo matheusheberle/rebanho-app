@@ -391,3 +391,8 @@ select.input { font: inherit; color: var(--ink); }
 .cotacao-form a { color: var(--capim); overflow-wrap: anywhere; }
 .quote-section a { color: var(--capim); }
 .quote-options summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--muted); font-size: 14px; }
+/* Textos livres e controles secundários também cabem em telas estreitas. */
+.row-main, .ev-m, .alert-row > span { overflow-wrap: anywhere; }
+.chip { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+.linkbtn, .back { min-height: 44px; }
+.sync-status { padding-inline: 12px; padding-top: max(10px, env(safe-area-inset-top)); }

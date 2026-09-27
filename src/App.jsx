@@ -55,11 +55,11 @@ export default function App() {
   const Pagina = paginas[rota.pagina] || Home;
   const mensagens = { offline: 'Offline · dados neste aparelho', sincronizando: 'Sincronizando…', sincronizado: 'Sincronizado', erro: 'Erro ao sincronizar' };
   const status = !supabaseConfigurado ? 'Dados neste aparelho · nuvem não configurada'
-    : `${mensagens[sync.estado]}${sync.conflitos ? ` · ${sync.conflitos} atualização(ões) remota(s) prevaleceram` : ''}`;
+    : `${sync.estado === 'sincronizado' && dados?.pendentes ? 'Alterações aguardando envio' : mensagens[sync.estado]}${dados?.pendentes ? ` · ${dados.pendentes} ${dados.pendentes === 1 ? 'alteração pendente' : 'alterações pendentes'}` : ''}${sync.conflitos ? ` · ${sync.conflitos} ${sync.conflitos === 1 ? 'registro atualizado' : 'registros atualizados'} com a versão da nuvem` : ''}`;
 
   const SyncIcon = { offline: CloudOff, sincronizando: RefreshCw, sincronizado: Cloud, erro: CircleAlert }[sync.estado];
   return <div className="app">
-    <div className="sync-status" role="status" title={sync.erro || undefined}>{<SyncIcon size={15} />}<span className="sync-state">{status}</span>{supabaseConfigurado && <button className="linkbtn" disabled={sync.estado === 'sincronizando'} onClick={() => void sincronizarTudo()}>Sincronizar agora</button>}</div>
+    <div className="sync-status" role="status" title={sync.erro || undefined}>{<SyncIcon size={15} aria-hidden="true" />}<span className="sync-state">{status}</span>{supabaseConfigurado && <button className="linkbtn" disabled={sync.estado === 'sincronizando' || sync.estado === 'offline'} onClick={() => void sincronizarTudo()}>Sincronizar agora</button>}</div>
     <main ref={main} tabIndex={-1}>
       {erro ? <p className="erro" role="alert">{erro}</p> : !dados ? <p role="status">Carregando rebanho…</p> : <Pagina key={rota.chave} {...dadosAtivos(dados)} registroEdicao={rota.registroEdicao} loteId={rota.loteId} tipoInicial={rota.tipo} navegar={navegar} avisar={setAviso} />}
     </main>

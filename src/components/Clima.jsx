@@ -10,19 +10,22 @@ function diaSemana(data) {
 
 export default function Clima({ localizacao, navegar }) {
   const [estado, setEstado] = useState({ carregando: false, previsao: null });
-  const [tentativa, setTentativa] = useState(0);
+  const [tentativa, setTentativa] = useState({ numero: 0, forcar: false });
   const latitude = localizacao?.latitude;
   const longitude = localizacao?.longitude;
   useEffect(() => {
-    const atualizar = () => setTentativa(t => t + 1);
+    const atualizar = () => setTentativa(t => ({ numero: t.numero + 1, forcar: false }));
+    const voltar = () => { if (document.visibilityState === 'visible') atualizar(); };
     window.addEventListener('online', atualizar);
-    return () => window.removeEventListener('online', atualizar);
+    document.addEventListener('visibilitychange', voltar);
+    return () => { window.removeEventListener('online', atualizar); document.removeEventListener('visibilitychange', voltar); };
   }, []);
   useEffect(() => {
     if (latitude == null || longitude == null) return;
     const controller = new AbortController();
-    setEstado({ carregando: true, previsao: null });
-    obterPrevisao(latitude, longitude, { signal: controller.signal, forcar: tentativa > 0 })
+    setEstado(anterior => ({ ...anterior, carregando: true }));
+    obterPrevisao(latitude, longitude, { signal: controller.signal, forcar: tentativa.forcar,
+      onCache: previsao => { if (!controller.signal.aborted) setEstado({ carregando: true, previsao }); } })
       .then(previsao => { if (!controller.signal.aborted) setEstado({ carregando: false, previsao }); })
       .catch(() => { if (!controller.signal.aborted) setEstado({ carregando: false, previsao: null }); });
     return () => controller.abort();
@@ -43,7 +46,7 @@ export default function Clima({ localizacao, navegar }) {
       {carregando && <p className="hint" role="status">Consultando clima…</p>}
       {!carregando && !previsao && <p className="hint" role="status">Clima indisponível</p>}
       {previsao && <>
-        {(previsao.desatualizada || vencida) && <p className="alert" role="status">{vencida ? 'Previsão salva de dias anteriores. Conecte-se para atualizar.' : 'Não foi possível atualizar. Exibindo a última previsão salva.'}</p>}
+        {!carregando && (previsao.desatualizada || vencida) && <p className="alert" role="status">{vencida ? 'Previsão salva de dias anteriores. Conecte-se para atualizar.' : 'Não foi possível atualizar. Exibindo a última previsão salva.'}</p>}
         <div className="clima" tabIndex={0} role="region" aria-label="Previsão diária; deslize para ver os próximos dias">{dias.map(d => <div className={`clima-d${d.data === hoje ? ' is-today' : ''}`} key={d.data}>
           <time className="cd-dia" dateTime={d.data}>{d.data === hoje ? 'Hoje' : diaSemana(d.data)}</time>
           {vencida && <span className="cd-data">{dataFormatada(d.data).slice(0, 5)}</span>}
@@ -55,7 +58,7 @@ export default function Clima({ localizacao, navegar }) {
         {!vencida && chuvosos.length > 0 && <p className="hint weather-note"><Icon nome="chuva" size={18} /><span>Alta chance de chuva em {chuvosos.length} {chuvosos.length === 1 ? 'dia' : 'dias'} ({chuvosos.map(d => d.data === hoje ? 'hoje' : diaSemana(d.data)).join(', ')}). Considere adiar manejos que dependam de tempo seco.</span></p>}
         <p className="hint weather-updated">{previsao.origem === 'cache' ? 'Previsão salva' : 'Atualizado'} em {new Date(previsao.atualizadoEm).toLocaleString('pt-BR')}. Valores previstos, não medidos.</p>
       </>}
-      <button className="linkbtn weather-refresh" disabled={carregando} onClick={() => setTentativa(t => t + 1)}><Icon nome="atualizar" size={16} />Atualizar previsão</button>
+      <button className="linkbtn weather-refresh" disabled={carregando} onClick={() => setTentativa(t => ({ numero: t.numero + 1, forcar: true }))}><Icon nome="atualizar" size={16} />Atualizar previsão</button>
     </>}
     <p className="hint weather-credit">Previsão: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a></p>
   </section>;

@@ -5,6 +5,14 @@ import { VitePWA } from 'vite-plugin-pwa';
 // Config do PWA: o service worker deixa o app abrir e salvar
 // registros mesmo sem sinal, que é o cenário mais comum na fazenda.
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        // Dependências estáveis podem permanecer em cache entre versões do app.
+        manualChunks: { supabase: ['@supabase/supabase-js'], dexie: ['dexie'], react: ['react', 'react-dom'] }
+      }
+    }
+  },
   plugins: [
     react(),
     VitePWA({

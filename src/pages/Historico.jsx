@@ -1,5 +1,5 @@
 import AcoesRegistro from '../components/AcoesRegistro.jsx';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Chip, EmptyState, Icon, PageTitle } from '../components/UI.jsx';
 import { TIPOS, dataFormatada, nomePasto, numero } from '../lib/apresentacao.js';
 
@@ -25,6 +25,9 @@ export function ListaEventos({ eventos, lotes, pastos, mostrarLote = true, naveg
 
 export default function Historico({ lotes, eventos, pastos, pastosHistorico = pastos, navegar, avisar }) {
   const [filtro, setFiltro] = useState('todos');
+  useEffect(() => {
+    if (filtro !== 'todos' && !lotes.some(l => l.id === filtro)) setFiltro('todos');
+  }, [lotes, filtro]);
   return <><PageTitle icon="historico">Histórico</PageTitle><p className="sub subtitle">Acompanhe o que aconteceu no rebanho.</p><div className="chips page-list"><Chip ativo={filtro === 'todos'} onClick={() => setFiltro('todos')}>Todos</Chip>{lotes.map(l => <Chip key={l.id} ativo={filtro === l.id} onClick={() => setFiltro(l.id)}>{l.nome}</Chip>)}</div>
     <ListaEventos navegar={navegar} avisar={avisar} eventos={eventos.filter(e => filtro === 'todos' || e.loteId === filtro)} lotes={lotes} pastos={pastosHistorico} />
   </>;

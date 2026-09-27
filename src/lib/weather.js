@@ -51,13 +51,15 @@ export function dataNaLocalizacao(timezone, agora = new Date()) {
   return `${campo('year')}-${campo('month')}-${campo('day')}`;
 }
 
-export async function obterPrevisao(latitude, longitude, { signal, forcar = false } = {}) {
+export async function obterPrevisao(latitude, longitude, { signal, forcar = false, onCache } = {}) {
   if (!coordenadasValidas(latitude, longitude)) throw new Error('Coordenadas inválidas.');
   // A chave impede que a previsão de uma fazenda seja exibida em outra.
   const chave = `${latitude},${longitude}`;
   const cache = await db.clima_cache.get(chave);
+  if (signal?.aborted) throw new DOMException('Consulta cancelada.', 'AbortError');
   const recente = cache && Date.now() - Date.parse(cache.atualizadoEm) < CACHE_MS
     && cache.dias.some(d => d.data === dataNaLocalizacao(cache.timezone));
+  if (cache) onCache?.({ ...cache, origem: 'cache', desatualizada: !recente });
   if (!forcar && recente) return { ...cache, origem: 'cache', desatualizada: false };
   try {
     if (typeof navigator !== 'undefined' && !navigator.onLine) throw new Error('Sem conexão.');

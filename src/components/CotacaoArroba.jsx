@@ -15,7 +15,7 @@ export default function CotacaoArroba({ navegar }) {
     let ativo = true;
     const atualizar = async () => {
       setOffline(!navigator.onLine); setBuscando(true);
-      try { await carregarCotacaoArroba(); } catch { if (ativo) setErroLocal('Não foi possível atualizar agora.'); }
+      try { await carregarCotacaoArroba(); if (ativo) setErroLocal(''); } catch { if (ativo) setErroLocal('Não foi possível atualizar agora.'); }
       finally { if (ativo) setBuscando(false); }
     };
     const voltar = () => { if (document.visibilityState === 'visible') void atualizar(); };

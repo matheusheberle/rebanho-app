@@ -1,4 +1,4 @@
-﻿# Cotação automática da arroba
+# Cotação automática da arroba
 
 ## Fonte e contrato verificado
 
@@ -100,7 +100,7 @@ Não há garantia de mesma condição comercial entre fontes agregadas, série h
 ou cotação intradiária. Não se calcula valor financeiro do rebanho.
 Limpar os dados do navegador remove as preferências/cache locais.
 Nenhuma biblioteca foi adicionada, nenhuma migration é necessária e não houve publicação remota.
-O aviso existente de bundle acima de 500 kB permanece.
+O aviso de bundle observado nesta etapa foi resolvido na revisão de 27/09/2026; veja revisao-geral-20260927.md para as métricas e limitações.
 
 ## Arquivos desta etapa
 
