@@ -4,6 +4,7 @@ import { hojeISO, numero } from '../lib/apresentacao.js';
 import { categoriasDoLote } from '../lib/categorias.js';
 import { totaisDeChuva } from '../lib/chuva.js';
 import Clima from '../components/Clima.jsx';
+import LocalizacaoPropriedade from '../components/LocalizacaoPropriedade.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import LeiturasChuva from '../components/LeiturasChuva.jsx';
 import CotacaoArroba from '../components/CotacaoArroba.jsx';
@@ -26,7 +27,8 @@ export default function Home({ lotes, eventos, pastos, chuvas, localizacao, nave
     <section aria-label="Categorias do rebanho" className="herd-categories"><SectionTitle icon="categoria">Categorias do rebanho</SectionTitle>{categorias.length ? <ul className="chips category-badges">{categorias.map(c => <li className="chip" key={c}>{c}</li>)}</ul> : <p className="hint">Nenhuma categoria nos lotes ativos com saldo.</p>}<p className="hint">Sem divisão de cabeças por categoria.</p></section>
     {lotes.length === 0 && <EmptyState icon="lotes" title="Seu rebanho começa aqui"><p>Nenhum lote cadastrado ainda. Crie o primeiro lote para acompanhar seu rebanho.</p><button className="btn" onClick={() => navegar('novoLote')}><Icon nome="novoLote" />Criar primeiro lote</button></EmptyState>}
     {alertas.length > 0 && <section className="home-section alerts-section"><SectionTitle icon="alerta">Precisa de atenção</SectionTitle>{alertas.map((a, i) => <button className="alert alert-row" key={`${a.loteId}-${i}`} onClick={() => navegar('lote', a.loteId)}><Icon nome="alerta" /><span>{a.texto}</span><Icon nome="chev" /></button>)}</section>}
-    <Clima key={`${localizacao?.latitude},${localizacao?.longitude}`} localizacao={localizacao} navegar={navegar} />
+    <LocalizacaoPropriedade localizacao={localizacao} navegar={navegar} />
+    <Clima key={`${localizacao?.latitude},${localizacao?.longitude},${localizacao?.atualizadoEm}`} localizacao={localizacao} navegar={navegar} />
     <section aria-labelledby="chuva-titulo" className="home-section surface rain-section"><SectionTitle id="chuva-titulo" icon="chuva">Chuva na fazenda</SectionTitle>
       <p className="hint">Medições do pluviômetro da propriedade.</p>
       {duplicadas.length > 0 && <p className="erro" role="status">Há datas com leituras duplicadas. Os totais são parciais e não incluem essas datas. Abra “Ver e corrigir leituras” para escolher qual manter; os valores foram preservados.</p>}

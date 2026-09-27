@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { liveQuery } from 'dexie';
 import { db } from './lib/db.js';
+import { lerPropriedade } from './lib/propriedade.js';
 import { iniciarSincronizacao, getSyncStatus, subscribeSyncStatus } from './lib/sync.js';
 import { supabaseConfigurado } from './lib/supabase.js';
 import BottomNav from './components/BottomNav.jsx';
@@ -32,7 +33,7 @@ export default function App() {
     const consulta = liveQuery(() => db.transaction('r', [db.lotes, db.eventos, db.pastos, db.fila_sync, db.chuvas, db.configuracoes], async () => ({
       lotes: await db.lotes.toArray(), eventos: await db.eventos.toArray(),
       pastos: await db.pastos.toArray(), pendentes: await db.fila_sync.count(),
-      chuvas: await db.chuvas.toArray(), localizacao: await db.configuracoes.get('localizacao')
+      chuvas: await db.chuvas.toArray(), localizacao: await lerPropriedade()
     }))).subscribe({ next: valor => { setDados(valor); setErro(''); }, error: () => setErro('Não foi possível abrir os dados locais. Recarregue o aplicativo para tentar novamente.') });
     const pararSincronizacao = iniciarSincronizacao();
     return () => { consulta.unsubscribe(); pararSincronizacao(); };

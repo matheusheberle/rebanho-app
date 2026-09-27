@@ -2,7 +2,9 @@ import { liveQuery } from 'dexie';
 import { db } from './db.js';
 import { hojeISO } from './apresentacao.js';
 
-export const ESTADOS = { AC:'Acre', AL:'Alagoas', AP:'Amapá', AM:'Amazonas', BA:'Bahia', CE:'Ceará', DF:'Distrito Federal', ES:'Espírito Santo', GO:'Goiás', MA:'Maranhão', MT:'Mato Grosso', MS:'Mato Grosso do Sul', MG:'Minas Gerais', PA:'Pará', PB:'Paraíba', PR:'Paraná', PE:'Pernambuco', PI:'Piauí', RJ:'Rio de Janeiro', RN:'Rio Grande do Norte', RS:'Rio Grande do Sul', RO:'Rondônia', RR:'Roraima', SC:'Santa Catarina', SP:'São Paulo', SE:'Sergipe', TO:'Tocantins' };
+import { ESTADOS } from './estados.js';
+export { ESTADOS } from './estados.js';
+import { lerPropriedade } from './propriedade.js';
 export const ENDPOINT_COTACAO = 'https://agrodocai.com.br/api/v1/cotacao';
 export const CACHE_COTACAO_MS = 6 * 60 * 60 * 1000;
 const PREFERENCIA = 'cotacao:preferencia';
@@ -72,9 +74,21 @@ export async function buscarCotacaoArroba(uf, { fetchImpl = globalThis.fetch, ti
 
 export async function salvarPreferenciaCotacao(uf) {
   validarUF(uf);
-  const preferencia = { uf, nome:ESTADOS[uf] };
+  const preferencia = { uf, nome:ESTADOS[uf], origem: 'manual' };
   await db.configuracoes.put({ chave:PREFERENCIA, ...preferencia });
   return preferencia;
+}
+
+export async function usarUFDaPropriedade() {
+  await db.configuracoes.put({ chave: PREFERENCIA, origem: 'propriedade' });
+}
+
+async function referenciaCotacao() {
+  const propriedade = await lerPropriedade();
+  const manual = await db.configuracoes.get(PREFERENCIA);
+  if (manual?.origem === 'manual' && Object.hasOwn(ESTADOS, manual.uf)) return { propriedade, preferencia: manual };
+  if (propriedade?.uf) return { propriedade, preferencia: { uf: propriedade.uf, nome: ESTADOS[propriedade.uf], origem: 'propriedade' } };
+  return { propriedade, preferencia: manual && Object.hasOwn(ESTADOS, manual.uf) ? manual : null };
 }
 
 async function migrarPreferenciaLegada() {
@@ -101,8 +115,8 @@ export async function obterCotacaoEmCache(uf) {
 }
 export async function lerCotacaoSelecionada() {
   return db.transaction('r', db.configuracoes, async () => {
-    const preferencia = await db.configuracoes.get(PREFERENCIA);
-    return preferencia ? { preferencia, ...await obterCotacaoEmCache(preferencia.uf) } : { preferencia:null, cotacao:null, estado:{} };
+    const { propriedade, preferencia } = await referenciaCotacao();
+    return preferencia ? { propriedade, preferencia, ...await obterCotacaoEmCache(preferencia.uf) } : { propriedade, preferencia:null, cotacao:null, estado:{} };
   });
 }
 export const observarCotacao = ouvinte => liveQuery(lerCotacaoSelecionada).subscribe(ouvinte);
@@ -158,7 +172,7 @@ export async function salvarCotacaoManual(uf, { valor, data = hojeISO() }) {
   await db.transaction('rw', db.configuracoes, async () => {
     const estado = await db.configuracoes.get(chave('estado',uf)) || {};
     if (online() && !estado.erro) throw erro('manual','A consulta automática está disponível. Use Atualizar na Home.');
-    if ((await db.configuracoes.get(PREFERENCIA))?.uf !== uf) throw erro('uf','A região foi alterada. Abra o formulário novamente.');
+    if ((await referenciaCotacao()).preferencia?.uf !== uf) throw erro('uf','A região foi alterada. Abra o formulário novamente.');
     await db.configuracoes.put({ chave:chave('manual',uf), uf, valor:Number(texto.replace(',','.')), dataCotacao:data,
       fonte:'Usuário', modo:'manual', variacao:null, atualizadoLocalmenteEm:new Date().toISOString() });
     await db.configuracoes.put({ ...estado, chave:chave('estado',uf), modo:'manual' });

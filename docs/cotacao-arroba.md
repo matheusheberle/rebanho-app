@@ -35,10 +35,10 @@ Não foi implementado scraping; a integração consulta apenas JSON estruturado.
 
 ## Uso
 
-Na Home, escolha **Escolher região**, selecione a UF e salve. O aplicativo consulta
+Configure a **Localização da propriedade** na Home. Sua UF será usada como referência. O aplicativo consulta
 automaticamente a fonte. A configuração principal não pede preço, fonte ou data.
-A referência comercial é estadual e independente da localização do clima.
-**Alterar região** permite trocar de UF; cada estado mantém seu próprio cache.
+A referência comercial padrão é a UF da propriedade. É possível escolher outra UF em uma opção secundária; veja [Localização da propriedade](localizacao-propriedade.md).
+**Referência da cotação → Alterar somente a UF da cotação** permite uma exceção comercial; cada estado mantém seu próprio cache.
 **Atualizar** solicita nova consulta, respeitando os intervalos de proteção.
 
 ## Cache, rede e limites
@@ -46,7 +46,7 @@ A referência comercial é estadual e independente da localização do clima.
 O módulo `src/lib/cotacao.js` centraliza consulta, parser, preferências e cache.
 Usa a tabela Dexie `configuracoes` existente:
 
-- `cotacao:preferencia`: UF e nome do estado;
+- `cotacao:preferencia`: origem propriedade, ou exceção manual com UF e nome do estado;
 - `cotacao:automatico:<UF>`: última resposta normalizada e horário da consulta;
 - `cotacao:manual:<UF>`: último valor manual, separado do automático;
 - `cotacao:estado:<UF>`: modo, última tentativa e erros temporários;

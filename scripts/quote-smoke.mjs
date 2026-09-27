@@ -20,6 +20,7 @@ export async function testarCotacao({evaluate,until,click,fill,command}) {
   const mock=`(${instalarMock.toString()})()`;
   await command('Page.addScriptToEvaluateOnNewDocument',{source:mock}); await evaluate(mock);
   const estado=await evaluate(`(async()=>{const {db}=await import('/src/lib/db.js');return {fila:await db.fila_sync.toArray(),clima:await db.configuracoes.get('localizacao'),total:document.querySelector('.tag-num').textContent};})()`);
+  await evaluate(`document.querySelector('.quote-settings').open = true`);
   await click('Escolher região'); await until(`!!document.querySelector('#cotacao-uf')`);
   assert.equal(await evaluate(`document.querySelectorAll('.cotacao-form input').length`),0,'Só pede UF');
   await evaluate(`(()=>{const s=document.querySelector('#cotacao-uf');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(s,'PR');s.dispatchEvent(new Event('change',{bubbles:true}));})()`);

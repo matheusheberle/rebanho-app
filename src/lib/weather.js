@@ -1,15 +1,12 @@
 import { db } from './db.js';
+import { coordenadasValidas, ufDoEstado } from './propriedade.js';
+export { coordenadasValidas, salvarPropriedade as salvarLocalizacao } from './propriedade.js';
 
 const CAMPOS = [
   'temperature_2m_max', 'temperature_2m_min', 'precipitation_probability_max',
   'precipitation_sum', 'weather_code', 'wind_speed_10m_max'
 ];
 const CACHE_MS = 60 * 60 * 1000;
-
-export function coordenadasValidas(latitude, longitude) {
-  return Number.isFinite(latitude) && Math.abs(latitude) <= 90
-    && Number.isFinite(longitude) && Math.abs(longitude) <= 180;
-}
 
 async function consultarJSON(url, signal) {
   const controller = new AbortController();
@@ -35,14 +32,9 @@ export async function buscarLocalidades(nome, { signal } = {}) {
   const dados = await consultarJSON(`https://geocoding-api.open-meteo.com/v1/search?${params}`, signal);
   return (dados.results || []).filter(l => coordenadasValidas(l.latitude, l.longitude)).map(l => ({
     nome: [...new Set([l.name, l.admin1, l.country].filter(Boolean))].join(', '),
+    municipio: l.admin2 || l.name || '', uf: l.country_code === 'BR' ? ufDoEstado(l.admin1) : null,
     latitude: l.latitude, longitude: l.longitude
   }));
-}
-
-// Configuração/cache são exclusivos deste aparelho e não entram na fila_sync.
-export async function salvarLocalizacao({ nome, latitude, longitude }) {
-  if (!nome.trim() || !coordenadasValidas(latitude, longitude)) throw new Error('Informe um nome e coordenadas válidas.');
-  await db.configuracoes.put({ chave: 'localizacao', nome: nome.trim(), latitude, longitude });
 }
 
 export function dataNaLocalizacao(timezone, agora = new Date()) {

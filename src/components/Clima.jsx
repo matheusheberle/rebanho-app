@@ -40,7 +40,7 @@ export default function Clima({ localizacao, navegar }) {
   const temp = v => v == null ? '–' : `${numero(v)}°`;
   return <section aria-labelledby="clima-titulo" className="home-section surface weather-section">
     <SectionTitle id="clima-titulo" icon="clima">Previsão do tempo</SectionTitle>
-    {!localizacao ? <><p className="hint">Configure a localização da fazenda para consultar a previsão.</p><button className="btn ghost sm section-action" onClick={() => navegar('localizacao')}><Icon nome="localizacao" />Configurar localização</button></> : <>
+    {!localizacao ? <p className="hint">Configure a localização da propriedade acima para consultar a previsão.</p> : <>
       <p className="hint location-caption"><Icon nome="localizacao" size={16} />{localizacao.nome}</p>
       <button className="linkbtn" onClick={() => navegar('localizacao')}>Alterar localização</button>
       {carregando && <p className="hint" role="status">Consultando clima…</p>}

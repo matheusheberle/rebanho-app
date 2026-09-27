@@ -58,7 +58,7 @@ export async function testarClimaEChuva({ command, evaluate, until, click, fill 
   assert.equal(await evaluate(`document.querySelector('[data-total-chuva="semana"]').textContent`), '42,0 mm');
   await command('Page.reload');
   await until(`document.querySelector('[data-total-chuva="hoje"]')?.textContent === '18,5 mm'`);
-  await click('Configurar localização');
+  await click('Escolher manualmente');
   await fill('local-busca', 'Local de teste');
   await click('Buscar localidade');
   await until(`document.querySelector('main .row')?.textContent.includes('Local de teste')`);
@@ -91,6 +91,7 @@ export async function testarClimaEChuva({ command, evaluate, until, click, fill 
   await until(`document.querySelector('.weather-section .alert')?.textContent.includes('última previsão salva')`);
   await click('Alterar localização');
   await fill('local-nome', 'Outra fazenda');
+  await evaluate(`document.querySelector('.location-coordinates').open = true`);
   await fill('local-latitude', '-31');
   await click('Salvar localização');
   await until(`document.querySelector('.weather-section')?.textContent.includes('Clima indisponível')`);

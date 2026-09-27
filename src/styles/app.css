@@ -396,3 +396,6 @@ select.input { font: inherit; color: var(--ink); }
 .chip { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 .linkbtn, .back { min-height: 44px; }
 .sync-status { padding-inline: 12px; padding-top: max(10px, env(safe-area-inset-top)); }
+.property-section a { color: var(--capim); }
+.location-coordinates, .quote-settings { margin-top: 12px; }
+.location-coordinates summary, .quote-settings summary { min-height: 44px; padding-block: 10px; cursor: pointer; color: var(--muted); font-size: 15px; }

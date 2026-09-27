@@ -29,7 +29,7 @@ export default function CotacaoArroba({ navegar }) {
     try { await carregarCotacaoArroba({forcar:true}); } catch { setErroLocal('Não foi possível atualizar agora.'); }
     finally { setBuscando(false); }
   }
-  const {preferencia,cotacao,estado={}} = dados || {};
+  const {preferencia,cotacao,propriedade,estado={}} = dados || {};
   const fallback = offline || Boolean(estado.erro);
   return <section className="home-section quiet-section quote-section" aria-labelledby="cotacao-titulo">
     <SectionTitle id="cotacao-titulo" icon="venda">Arroba do boi</SectionTitle>
@@ -43,9 +43,11 @@ export default function CotacaoArroba({ navegar }) {
       </> : <><p className="quote-region">Referência: {preferencia.nome} ({preferencia.uf})</p><p className="hint" role="status">{buscando ? 'Buscando cotação…' : 'Cotação indisponível no momento.'}</p></>}
       {estado.erro && !offline && <p className="hint">{estado.erro}</p>}
       <p className="hint"><a href="https://agrodocai.com.br" target="_blank" rel="noreferrer">Cotação via AgroDoc AI · agrodocai.com.br</a></p>
-      <div className="quote-actions"><button className="linkbtn" onClick={atualizar} disabled={buscando || offline}>{buscando ? 'Atualizando…' : 'Atualizar'}</button><button className="linkbtn" onClick={()=>navegar('cotacao')}>Alterar região</button></div>
+      <p className="hint">{preferencia.origem === 'propriedade' ? 'UF da propriedade.' : 'UF escolhida separadamente da propriedade.'}</p>
+      <div className="quote-actions"><button className="linkbtn" onClick={atualizar} disabled={buscando || offline}>{buscando ? 'Atualizando…' : 'Atualizar'}</button></div>
+      <details className="quote-settings"><summary>Referência da cotação</summary><button className="linkbtn" onClick={()=>navegar('cotacao')}>Alterar somente a UF da cotação</button></details>
       {fallback && <details className="quote-options"><summary>Mais opções</summary><button className="linkbtn" onClick={()=>navegar('cotacao',null,'valor')}>Informar valor manualmente</button></details>}
-    </> : <><p className="hint">Configure sua região para acompanhar a arroba do boi.</p><button className="linkbtn" onClick={()=>navegar('cotacao')}>Escolher região</button></>}
+    </> : <><p className="hint">{propriedade ? 'A UF da propriedade ainda não foi identificada. Confirme a UF para consultar a arroba.' : 'Configure a localização da propriedade para acompanhar a arroba do boi.'}</p><button className="linkbtn" onClick={()=>navegar('localizacao')}>Configurar propriedade</button><details className="quote-settings"><summary>Informar somente a UF</summary><button className="linkbtn" onClick={()=>navegar('cotacao')}>Escolher região</button></details></>}
     {erroLocal && <p className="hint" role="status">{erroLocal}</p>}
   </section>;
 }
