@@ -16,6 +16,7 @@ import { testarCotacao } from './quote-smoke.mjs';
 import { testarRevisao } from './review-smoke.mjs';
 import { testarPropriedade } from './property-smoke.mjs';
 import { testarConfiguracoes } from './settings-smoke.mjs';
+import { testarAgrupamentoLotes } from './lots-grouping-smoke.mjs';
 
 const browserPath = process.env.BROWSER_PATH || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const profile = await mkdtemp(join(tmpdir(), 'rebanho-smoke-'));
@@ -135,7 +136,7 @@ try {
   await command('Page.navigate', { url: 'http://127.0.0.1:5197' });
   await until(`document.body.textContent.includes('Criar primeiro lote')`);
   assert.equal(await evaluate(`document.querySelectorAll('.category-badges .chip').length`),0);
-  await click('Pastos e potreiros');
+  await click('Lotes'); await click('Pastos e potreiros');
   await until(`document.body.textContent.includes('Nenhum pasto cadastrado ainda.')`);
   await click('Início');
   assert.equal(await evaluate(`document.querySelector('.tag-num').textContent`), '0');
@@ -202,6 +203,7 @@ try {
   await testarRevisao({ evaluate, until, click, fill });
   await testarPropriedade({ command, evaluate, until, click, fill });
   await testarConfiguracoes({ command, evaluate, until, click, fill });
+  await testarAgrupamentoLotes({ command, evaluate, until, click });
   assert.deepEqual(runtimeErrors, [], 'Sem exceções no navegador');
   const screenshot = await command('Page.captureScreenshot', { format: 'png' });
   await writeFile(join(tmpdir(), 'rebanho-smoke.png'), Buffer.from(screenshot.data, 'base64'));

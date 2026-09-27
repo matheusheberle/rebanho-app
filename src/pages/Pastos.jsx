@@ -22,7 +22,7 @@ export default function Pastos({ pastos, lotes, eventos, navegar, avisar }) {
     <label className="lbl" htmlFor="pasto-nome">Nome</label><input autoFocus id="pasto-nome" className="input" required value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} />
     {erro && <p className="erro" role="alert">{erro}</p>}<button className="btn salvar"><Icon nome="salvar" />{salvando ? 'Salvando…' : 'Salvar pasto'}</button>
   </fieldset></form></>;
-  return <><Voltar onClick={() => navegar('home')}>Início</Voltar><PageTitle icon="pastos">Pastos e potreiros</PageTitle><p className="sub subtitle">Cadastre e organize os locais usados pelos lotes.</p>
+  return <><Voltar onClick={() => navegar('lotes')}>Lotes</Voltar><PageTitle icon="pastos">Pastos e potreiros</PageTitle><p className="sub subtitle">Cadastre e organize os locais usados pelos lotes.</p>
     {pastos.length ? <><button className="btn ghost" onClick={() => abrir()}><Icon nome="registrar" />Novo pasto</button><ul className="list pasture-list">{[...pastos].sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR')).map(p => {
       const uso = usoDoPasto(p.id, lotes, eventos);
       return <li key={p.id} className="reading-row"><div><strong>{p.nome}</strong><p className="hint">{uso.lotes} {uso.lotes === 1 ? 'lote' : 'lotes'} · {numero(uso.cabecas)} cabeças</p></div><AcoesRegistro tabela="pastos" registro={p} editar={() => abrir(p)} avisar={avisar} /></li>;

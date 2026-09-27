@@ -10,7 +10,7 @@ export async function testarPastos({ evaluate, until, click, fill, command }) {
     assert.ok(await evaluate(`getComputedStyle(document.querySelector('.category-badges .chip')).color!==getComputedStyle(document.body).backgroundColor`));
   }
   await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await click('Pastos e potreiros');
+  await click('Lotes'); await click('Pastos e potreiros');
   assert.equal(await evaluate(`document.querySelectorAll('nav button').length`),4);
   await click('Novo pasto'); await fill('pasto-nome','   '); await click('Salvar pasto');
   await until(`document.querySelector('.erro')?.textContent.includes('Informe o nome')`);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { saldoDoLote, pastoAtualDoLote, calcularAlertas } from '../lib/calc.js';
+import { saldoDoLote, calcularAlertas } from '../lib/calc.js';
 import { hojeISO, numero } from '../lib/apresentacao.js';
 import { categoriasDoLote } from '../lib/categorias.js';
 import { totaisDeChuva } from '../lib/chuva.js';
@@ -9,12 +9,12 @@ import ThemeToggle from '../components/ThemeToggle.jsx';
 import LeiturasChuva from '../components/LeiturasChuva.jsx';
 import CotacaoArroba from '../components/CotacaoArroba.jsx';
 import { EmptyState, Icon, SectionTitle } from '../components/UI.jsx';
-export default function Home({ lotes, eventos, pastos, chuvas, localizacao, navegar, avisar }) {
+export default function Home({ lotes, eventos, chuvas, localizacao, navegar, avisar }) {
   const contagens = new Map();
   chuvas.forEach(r => contagens.set(r.data, (contagens.get(r.data) || 0) + 1));
   const duplicadas = chuvas.filter(r => contagens.get(r.data) > 1);
   const chuva = totaisDeChuva(chuvas.filter(r => contagens.get(r.data) === 1), hojeISO());
-  const linhas = lotes.map(lote => ({ lote, saldo: saldoDoLote(lote.id, eventos), pastoId: pastoAtualDoLote(lote.id, eventos) }));
+  const linhas = lotes.map(lote => ({ lote, saldo: saldoDoLote(lote.id, eventos) }));
   const total = linhas.reduce((soma, linha) => soma + linha.saldo, 0);
   const categorias = [...new Set(linhas.filter(x => x.saldo > 0).flatMap(x => categoriasDoLote(x.lote)))];
   const alertas = calcularAlertas(lotes, eventos, hojeISO());
@@ -37,11 +37,5 @@ export default function Home({ lotes, eventos, pastos, chuvas, localizacao, nave
       <LeiturasChuva chuvas={chuvas} navegar={navegar} avisar={avisar} />
     </section>
     <CotacaoArroba navegar={navegar} />
-    <section className="home-section"><SectionTitle icon="pastos">Por potreiro</SectionTitle><button className="btn ghost section-action" onClick={() => navegar('pastos')}><Icon nome="pastos" />Pastos e potreiros</button>
-      {pastos.length === 0 ? <p className="hint">Os potreiros aparecerão aqui ao cadastrar seus lotes.</p> : <ul className="list">{pastos.map(p => {
-        const ocupantes = linhas.filter(x => x.saldo > 0 && x.pastoId === p.id);
-        return <li key={p.id}><div className="row"><span className="row-n">{numero(ocupantes.reduce((soma, x) => soma + x.saldo, 0))}</span><span className="row-main"><strong>{p.nome}</strong><span>{ocupantes.length ? ocupantes.map(x => x.lote.nome).join(', ') : 'Sem gado agora'}</span></span></div></li>;
-      })}</ul>}
-    </section>
   </>;
 }
