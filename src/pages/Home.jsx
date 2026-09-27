@@ -6,6 +6,7 @@ import { totaisDeChuva } from '../lib/chuva.js';
 import Clima from '../components/Clima.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import LeiturasChuva from '../components/LeiturasChuva.jsx';
+import CotacaoArroba from '../components/CotacaoArroba.jsx';
 import { EmptyState, Icon, SectionTitle } from '../components/UI.jsx';
 export default function Home({ lotes, eventos, pastos, chuvas, localizacao, navegar, avisar }) {
   const contagens = new Map();
@@ -34,7 +35,7 @@ export default function Home({ lotes, eventos, pastos, chuvas, localizacao, nave
       <button className="btn section-action" onClick={() => navegar('registrarChuva')}><Icon nome="chuva" />Registrar chuva</button>
       <LeiturasChuva chuvas={chuvas} navegar={navegar} avisar={avisar} />
     </section>
-    <section className="home-section quiet-section"><SectionTitle icon="venda">Arroba do boi (CEPEA)</SectionTitle><p className="hint">Cotação indisponível. Nenhuma fonte de atualização conectada.</p></section>
+    <CotacaoArroba navegar={navegar} />
     <section className="home-section"><SectionTitle icon="pastos">Por potreiro</SectionTitle><button className="btn ghost section-action" onClick={() => navegar('pastos')}><Icon nome="pastos" />Pastos e potreiros</button>
       {pastos.length === 0 ? <p className="hint">Os potreiros aparecerão aqui ao cadastrar seus lotes.</p> : <ul className="list">{pastos.map(p => {
         const ocupantes = linhas.filter(x => x.saldo > 0 && x.pastoId === p.id);

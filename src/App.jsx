@@ -13,6 +13,7 @@ import Historico from './pages/Historico.jsx';
 import NovoLote from './pages/NovoLote.jsx';
 import RegistrarChuva from './pages/RegistrarChuva.jsx';
 import ConfigurarLocalizacao from './pages/ConfigurarLocalizacao.jsx';
+import ConfigurarCotacao from './pages/ConfigurarCotacao.jsx';
 import './styles/app.css';
 import { dadosAtivos } from './lib/manutencao.js';
 import EditarLote from './pages/EditarLote.jsx';
@@ -50,7 +51,7 @@ export default function App() {
   function navegar(pagina, loteId = null, tipo = null, registroEdicao = null) {
     setRota(anterior => ({ pagina, loteId, tipo, registroEdicao, chave: anterior.chave + 1 }));
   }
-  const paginas = { pastos: Pastos, editarLote: EditarLote, home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
+  const paginas = { cotacao: ConfigurarCotacao, pastos: Pastos, editarLote: EditarLote, home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
   const Pagina = paginas[rota.pagina] || Home;
   const mensagens = { offline: 'Offline · dados neste aparelho', sincronizando: 'Sincronizando…', sincronizado: 'Sincronizado', erro: 'Erro ao sincronizar' };
   const status = !supabaseConfigurado ? 'Dados neste aparelho · nuvem não configurada'

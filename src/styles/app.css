@@ -383,3 +383,11 @@ select.input { font: inherit; color: var(--ink); }
 .category-badges { list-style: none; padding: 0; margin: 12px 0; }
 .category-badges .chip { cursor: default; white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
 .pasture-list strong { overflow-wrap: anywhere; }
+.quote-section { overflow-wrap: anywhere; }
+.quote-region { font-weight: 600; margin-bottom: 8px; }
+.quote-price { font-family: var(--display); font-size: 28px; font-weight: 700; margin: 8px 0; }
+.quote-price span { font: 16px var(--body); color: var(--muted); }
+.quote-actions { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.cotacao-form a { color: var(--capim); overflow-wrap: anywhere; }
+.quote-section a { color: var(--capim); }
+.quote-options summary { cursor: pointer; min-height: 44px; padding: 10px 0; color: var(--muted); font-size: 14px; }
