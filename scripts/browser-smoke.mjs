@@ -15,6 +15,7 @@ import { testarPastos } from './pastures-smoke.mjs';
 import { testarCotacao } from './quote-smoke.mjs';
 import { testarRevisao } from './review-smoke.mjs';
 import { testarPropriedade } from './property-smoke.mjs';
+import { testarConfiguracoes } from './settings-smoke.mjs';
 
 const browserPath = process.env.BROWSER_PATH || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const profile = await mkdtemp(join(tmpdir(), 'rebanho-smoke-'));
@@ -200,6 +201,7 @@ try {
   await testarCotacao({ command, evaluate, until, click, fill });
   await testarRevisao({ evaluate, until, click, fill });
   await testarPropriedade({ command, evaluate, until, click, fill });
+  await testarConfiguracoes({ command, evaluate, until, click, fill });
   assert.deepEqual(runtimeErrors, [], 'Sem exceções no navegador');
   const screenshot = await command('Page.captureScreenshot', { format: 'png' });
   await writeFile(join(tmpdir(), 'rebanho-smoke.png'), Buffer.from(screenshot.data, 'base64'));

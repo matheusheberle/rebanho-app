@@ -45,9 +45,8 @@ export default function CotacaoArroba({ navegar }) {
       <p className="hint"><a href="https://agrodocai.com.br" target="_blank" rel="noreferrer">Cotação via AgroDoc AI · agrodocai.com.br</a></p>
       <p className="hint">{preferencia.origem === 'propriedade' ? 'UF da propriedade.' : 'UF escolhida separadamente da propriedade.'}</p>
       <div className="quote-actions"><button className="linkbtn" onClick={atualizar} disabled={buscando || offline}>{buscando ? 'Atualizando…' : 'Atualizar'}</button></div>
-      <details className="quote-settings"><summary>Referência da cotação</summary><button className="linkbtn" onClick={()=>navegar('cotacao')}>Alterar somente a UF da cotação</button></details>
-      {fallback && <details className="quote-options"><summary>Mais opções</summary><button className="linkbtn" onClick={()=>navegar('cotacao',null,'valor')}>Informar valor manualmente</button></details>}
-    </> : <><p className="hint">{propriedade ? 'A UF da propriedade ainda não foi identificada. Confirme a UF para consultar a arroba.' : 'Configure a localização da propriedade para acompanhar a arroba do boi.'}</p><button className="linkbtn" onClick={()=>navegar('localizacao')}>Configurar propriedade</button><details className="quote-settings"><summary>Informar somente a UF</summary><button className="linkbtn" onClick={()=>navegar('cotacao')}>Escolher região</button></details></>}
+      {fallback && <p className="hint">As alternativas de cotação estão em Configurações.</p>}
+    </> : <><p className="hint">{propriedade ? 'A UF da propriedade ainda não foi identificada. Confirme a UF em Configurações.' : 'Configure a propriedade para acompanhar a arroba do boi.'}</p><button className="linkbtn" onClick={()=>navegar('configuracoes')}>Abrir configurações</button></>}
     {erroLocal && <p className="hint" role="status">{erroLocal}</p>}
   </section>;
 }

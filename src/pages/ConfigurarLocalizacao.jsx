@@ -36,7 +36,7 @@ export default function ConfigurarLocalizacao({ localizacao, navegar, avisar, ti
     finally { ocupado.current = false; setSalvando(false); }
   }
   return <>
-    <Voltar onClick={() => navegar('home')}>Início</Voltar><PageTitle icon="localizacao">Localização da propriedade</PageTitle>
+    <Voltar onClick={() => navegar('configuracoes')}>Configurações</Voltar><PageTitle icon="localizacao">Localização da propriedade</PageTitle>
     <p className="hint">Confira se o local é o da propriedade antes de salvar. Ele será usado para clima e referência regional da arroba até você alterá-lo.</p>
     {!salvando && (!manual ? <CapturarLocalizacao onSelecionar={local => { setDraft(local); setErro(''); }} onManual={() => setManual(true)} /> : <>
       <form onSubmit={pesquisar}>

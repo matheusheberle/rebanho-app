@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { liveQuery } from 'dexie';
 import { db } from './lib/db.js';
 import { lerPropriedade } from './lib/propriedade.js';
-import { iniciarSincronizacao, getSyncStatus, subscribeSyncStatus } from './lib/sync.js';
-import { supabaseConfigurado } from './lib/supabase.js';
+import { iniciarSincronizacao } from './lib/sync.js';
 import BottomNav from './components/BottomNav.jsx';
 import Home from './pages/Home.jsx';
 import Pastos from './pages/Pastos.jsx';
@@ -18,14 +17,13 @@ import ConfigurarCotacao from './pages/ConfigurarCotacao.jsx';
 import './styles/app.css';
 import { dadosAtivos } from './lib/manutencao.js';
 import EditarLote from './pages/EditarLote.jsx';
-import { sincronizarTudo } from './lib/sync.js';
-import { Cloud, CloudOff, RefreshCw, CircleAlert } from 'lucide-react';
+import Configuracoes from './pages/Configuracoes.jsx';
+import StatusSincronizacao from './components/StatusSincronizacao.jsx';
 
 export default function App() {
   const [rota, setRota] = useState({ pagina: 'home', loteId: null, tipo: null, chave: 0 });
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState('');
-  const sync = useSyncExternalStore(subscribeSyncStatus, getSyncStatus);
   const [aviso, setAviso] = useState('');
   const main = useRef(null);
 
@@ -52,15 +50,10 @@ export default function App() {
   function navegar(pagina, loteId = null, tipo = null, registroEdicao = null) {
     setRota(anterior => ({ pagina, loteId, tipo, registroEdicao, chave: anterior.chave + 1 }));
   }
-  const paginas = { cotacao: ConfigurarCotacao, pastos: Pastos, editarLote: EditarLote, home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
+  const paginas = { configuracoes: Configuracoes, cotacao: ConfigurarCotacao, pastos: Pastos, editarLote: EditarLote, home: Home, lotes: Lotes, lote: Lote, registrar: Registrar, historico: Historico, novoLote: NovoLote, registrarChuva: RegistrarChuva, localizacao: ConfigurarLocalizacao };
   const Pagina = paginas[rota.pagina] || Home;
-  const mensagens = { offline: 'Offline · dados neste aparelho', sincronizando: 'Sincronizando…', sincronizado: 'Sincronizado', erro: 'Erro ao sincronizar' };
-  const status = !supabaseConfigurado ? 'Dados neste aparelho · nuvem não configurada'
-    : `${sync.estado === 'sincronizado' && dados?.pendentes ? 'Alterações aguardando envio' : mensagens[sync.estado]}${dados?.pendentes ? ` · ${dados.pendentes} ${dados.pendentes === 1 ? 'alteração pendente' : 'alterações pendentes'}` : ''}${sync.conflitos ? ` · ${sync.conflitos} ${sync.conflitos === 1 ? 'registro atualizado' : 'registros atualizados'} com a versão da nuvem` : ''}`;
-
-  const SyncIcon = { offline: CloudOff, sincronizando: RefreshCw, sincronizado: Cloud, erro: CircleAlert }[sync.estado];
   return <div className="app">
-    <div className="sync-status" role="status" title={sync.erro || undefined}>{<SyncIcon size={15} aria-hidden="true" />}<span className="sync-state">{status}</span>{supabaseConfigurado && <button className="linkbtn" disabled={sync.estado === 'sincronizando' || sync.estado === 'offline'} onClick={() => void sincronizarTudo()}>Sincronizar agora</button>}</div>
+    {rota.pagina !== 'configuracoes' && <StatusSincronizacao pendentes={dados?.pendentes} />}
     <main ref={main} tabIndex={-1}>
       {erro ? <p className="erro" role="alert">{erro}</p> : !dados ? <p role="status">Carregando rebanho…</p> : <Pagina key={rota.chave} {...dadosAtivos(dados)} registroEdicao={rota.registroEdicao} loteId={rota.loteId} tipoInicial={rota.tipo} navegar={navegar} avisar={setAviso} />}
     </main>

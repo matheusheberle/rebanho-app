@@ -1,3 +1,4 @@
+import { abrirConfiguracoes } from './settings-navigation.mjs';
 import assert from 'node:assert/strict';
 
 function instalarMock() {
@@ -20,8 +21,8 @@ export async function testarCotacao({evaluate,until,click,fill,command}) {
   const mock=`(${instalarMock.toString()})()`;
   await command('Page.addScriptToEvaluateOnNewDocument',{source:mock}); await evaluate(mock);
   const estado=await evaluate(`(async()=>{const {db}=await import('/src/lib/db.js');return {fila:await db.fila_sync.toArray(),clima:await db.configuracoes.get('localizacao'),total:document.querySelector('.tag-num').textContent};})()`);
-  await evaluate(`document.querySelector('.quote-settings').open = true`);
-  await click('Escolher região'); await until(`!!document.querySelector('#cotacao-uf')`);
+  await abrirConfiguracoes({ evaluate, until, click });
+  await click('Alterar UF comercial'); await until(`!!document.querySelector('#cotacao-uf')`);
   assert.equal(await evaluate(`document.querySelectorAll('.cotacao-form input').length`),0,'Só pede UF');
   await evaluate(`(()=>{const s=document.querySelector('#cotacao-uf');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(s,'PR');s.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   await click('Salvar região'); await until(`document.querySelector('.quote-price')?.textContent.includes('367,00')`);
@@ -39,6 +40,8 @@ export async function testarCotacao({evaluate,until,click,fill,command}) {
   await evaluate(`Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});window.dispatchEvent(new Event('offline'));`);
   await until(`document.querySelector('.quote-section')?.textContent.includes('Última cotação disponível')`);
   assert.ok((await evaluate(`document.querySelector('.quote-price').textContent`)).includes('367,00'));
+  await abrirConfiguracoes({ evaluate, until, click });
+  await until(`Boolean(document.querySelector('.quote-options'))`);
   await evaluate(`document.querySelector('.quote-options').open=true`); await click('Informar valor manualmente');
   await until(`!!document.querySelector('#cotacao-valor')`); await fill('cotacao-valor','-1'); await click('Salvar valor manual');
   await until(`document.querySelector('.erro')?.textContent.includes('positivo')`);
@@ -50,7 +53,7 @@ export async function testarCotacao({evaluate,until,click,fill,command}) {
 
   for(const modo of ['500','429','json','estranho','sem']) {
     await liberar(); await evaluate(`window.__cotacaoModo='${modo}'`); await click('Atualizar');
-    await until(`!document.querySelector('.quote-actions button').disabled && !!document.querySelector('.quote-options')`);
+    await until(`!document.querySelector('.quote-actions button').disabled && document.querySelector('.quote-section').textContent.includes('As alternativas')`);
     assert.ok((await evaluate(`document.querySelector('.quote-price').textContent`)).includes('367,00'),modo+' preserva cache');
     if(modo==='429') {
       const antes=await evaluate(`window.__cotacaoChamadas.length`);
@@ -64,7 +67,7 @@ export async function testarCotacao({evaluate,until,click,fill,command}) {
   assert.equal(await evaluate(`!!document.querySelector('.quote-price')`),false);
   await evaluate(`(async()=>{window.__cotacaoModo='ok';const {salvarPreferenciaCotacao}=await import('/src/lib/cotacao.js');await salvarPreferenciaCotacao('PR');})()`);
   await until(`document.querySelector('.quote-region')?.textContent.includes('Paraná') && !document.querySelector('.quote-actions button').disabled`);
-  await liberar(); await click('Atualizar'); await until(`document.querySelector('.quote-price')?.textContent.includes('367,00') && !document.querySelector('.quote-options')`);
+  await liberar(); await click('Atualizar'); await until(`document.querySelector('.quote-price')?.textContent.includes('367,00') && !document.querySelector('.quote-section').textContent.includes('As alternativas')`);
 
   const validacoes=await evaluate(`(async()=>{
     const {interpretarCotacao,buscarCotacaoArroba,carregarCotacaoArroba,salvarCotacaoManual}=await import('/src/lib/cotacao.js');

@@ -399,3 +399,14 @@ select.input { font: inherit; color: var(--ink); }
 .property-section a { color: var(--capim); }
 .location-coordinates, .quote-settings { margin-top: 12px; }
 .location-coordinates summary, .quote-settings summary { min-height: 44px; padding-block: 10px; cursor: pointer; color: var(--muted); font-size: 15px; }
+/* Preferências em uma tela secundária; a Home mantém apenas atalhos discretos. */
+.home-tools { display: flex; gap: 6px; flex: none; }
+.settings-toggle { display: grid; place-items: center; width: 48px; height: 48px; flex: none; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); color: var(--capim); }
+.settings-page .settings-section { border-top: 1px solid var(--line); margin-top: 28px; padding-top: 24px; }
+.settings-section h2 { margin-top: 0; }
+.settings-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 16px; }
+.sync-details { justify-content: flex-start; padding: 12px 0; font-size: 15px; }
+.sync-state svg { vertical-align: middle; flex: none; }
+.sync-details .btn { margin-top: 8px; }
+.settings-page a { color: var(--capim); }
+@media (max-width: 360px) { .home-heading h1 { font-size: 27px; } }

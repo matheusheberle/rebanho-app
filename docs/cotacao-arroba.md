@@ -35,10 +35,10 @@ Não foi implementado scraping; a integração consulta apenas JSON estruturado.
 
 ## Uso
 
-Configure a **Localização da propriedade** na Home. Sua UF será usada como referência. O aplicativo consulta
+Abra **Configurações** pela engrenagem da Home e configure a **Localização da propriedade**. Sua UF será usada como referência. O aplicativo consulta
 automaticamente a fonte. A configuração principal não pede preço, fonte ou data.
 A referência comercial padrão é a UF da propriedade. É possível escolher outra UF em uma opção secundária; veja [Localização da propriedade](localizacao-propriedade.md).
-**Referência da cotação → Alterar somente a UF da cotação** permite uma exceção comercial; cada estado mantém seu próprio cache.
+**Configurações → Cotação da arroba → Alterar UF comercial** permite uma exceção comercial; cada estado mantém seu próprio cache.
 **Atualizar** solicita nova consulta, respeitando os intervalos de proteção.
 
 ## Cache, rede e limites
@@ -69,7 +69,7 @@ disponível. Sem cache, aparece **Cotação indisponível no momento**. HTTP 4xx
 
 ## Fallback manual e compatibilidade
 
-Somente offline ou após falha da fonte aparece **Mais opções → Informar valor manualmente**.
+Somente offline ou após falha da fonte aparece **Configurações → Cotação da arroba → Mais opções → Informar valor manualmente**.
 O formulário secundário permite preço positivo com ponto/vírgula e data válida
 (preenchida com hoje). Fonte e variação não são solicitadas. A Home mostra
 **Valor informado manualmente**. Uma consulta automática bem-sucedida volta a exibir

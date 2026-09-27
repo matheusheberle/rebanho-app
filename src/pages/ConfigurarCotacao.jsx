@@ -29,7 +29,7 @@ export default function ConfigurarCotacao({tipoInicial,navegar,avisar}) {
       avisar(manual?'Valor manual salvo neste aparelho.':'Região salva. A cotação será consultada automaticamente.');navegar('home');
     }catch(e){setErro(e.message);}finally{ocupado.current=false;setSalvando(false);}
   }
-  return <><Voltar onClick={()=>navegar('home')}>Início</Voltar><PageTitle icon="venda">{manual?'Informar valor manualmente':'Região da arroba'}</PageTitle>
+  return <><Voltar onClick={()=>navegar('configuracoes')}>Configurações</Voltar><PageTitle icon="venda">{manual?'Informar valor manualmente':'Região da arroba'}</PageTitle>
     {!dados ? <p role="status">{erro || 'Carregando…'}</p> : manual && !permitirManual ? <p className="hint">A consulta automática está disponível. Use Atualizar na Home.</p> : <form className="cotacao-form" onSubmit={salvar}><fieldset disabled={salvando}>
       {manual ? <><p className="hint">{ESTADOS[uf]} · alternativa enquanto a consulta automática estiver indisponível. Uma consulta bem-sucedida volta ao valor automático.</p>
         <label className="lbl" htmlFor="cotacao-valor">Valor em R$/@</label><input id="cotacao-valor" className="input" inputMode="decimal" required value={valor} onChange={e=>setValor(e.target.value)} />

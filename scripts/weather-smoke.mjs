@@ -1,3 +1,4 @@
+import { abrirConfiguracoes } from './settings-navigation.mjs';
 import assert from 'node:assert/strict';
 
 // Rede simulada apenas no perfil descartável do teste; nenhum dado real é enviado.
@@ -58,6 +59,7 @@ export async function testarClimaEChuva({ command, evaluate, until, click, fill 
   assert.equal(await evaluate(`document.querySelector('[data-total-chuva="semana"]').textContent`), '42,0 mm');
   await command('Page.reload');
   await until(`document.querySelector('[data-total-chuva="hoje"]')?.textContent === '18,5 mm'`);
+  await abrirConfiguracoes({ evaluate, until, click });
   await click('Escolher manualmente');
   await fill('local-busca', 'Local de teste');
   await click('Buscar localidade');
@@ -89,7 +91,8 @@ export async function testarClimaEChuva({ command, evaluate, until, click, fill 
   await evaluate(`Object.defineProperty(navigator, 'onLine', {configurable:true, get:()=>false})`);
   await click('Atualizar previsão');
   await until(`document.querySelector('.weather-section .alert')?.textContent.includes('última previsão salva')`);
-  await click('Alterar localização');
+  await abrirConfiguracoes({ evaluate, until, click });
+  await click('Atualizar localização');
   await fill('local-nome', 'Outra fazenda');
   await evaluate(`document.querySelector('.location-coordinates').open = true`);
   await fill('local-latitude', '-31');

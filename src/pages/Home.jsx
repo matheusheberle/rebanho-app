@@ -4,7 +4,7 @@ import { hojeISO, numero } from '../lib/apresentacao.js';
 import { categoriasDoLote } from '../lib/categorias.js';
 import { totaisDeChuva } from '../lib/chuva.js';
 import Clima from '../components/Clima.jsx';
-import LocalizacaoPropriedade from '../components/LocalizacaoPropriedade.jsx';
+import { Settings } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import LeiturasChuva from '../components/LeiturasChuva.jsx';
 import CotacaoArroba from '../components/CotacaoArroba.jsx';
@@ -19,7 +19,7 @@ export default function Home({ lotes, eventos, pastos, chuvas, localizacao, nave
   const categorias = [...new Set(linhas.filter(x => x.saldo > 0).flatMap(x => categoriasDoLote(x.lote)))];
   const alertas = calcularAlertas(lotes, eventos, hojeISO());
   return <>
-    <div className="home-heading"><h1>Rebanho hoje</h1><ThemeToggle /></div>
+    <div className="home-heading"><h1>Rebanho hoje</h1><div className="home-tools"><ThemeToggle /><button className="settings-toggle" aria-label="Configurações" title="Configurações" onClick={() => navegar('configuracoes')}><Settings size={21} aria-hidden="true" /></button></div></div>
     <p className="sub subtitle">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
     <div className="tag" role="group" aria-label={`Total do rebanho: ${total} cabeças`}>
       <div className="tag-num">{numero(total)}</div><div className="tag-lbl">cabeças no rebanho</div>
@@ -27,7 +27,6 @@ export default function Home({ lotes, eventos, pastos, chuvas, localizacao, nave
     <section aria-label="Categorias do rebanho" className="herd-categories"><SectionTitle icon="categoria">Categorias do rebanho</SectionTitle>{categorias.length ? <ul className="chips category-badges">{categorias.map(c => <li className="chip" key={c}>{c}</li>)}</ul> : <p className="hint">Nenhuma categoria nos lotes ativos com saldo.</p>}<p className="hint">Sem divisão de cabeças por categoria.</p></section>
     {lotes.length === 0 && <EmptyState icon="lotes" title="Seu rebanho começa aqui"><p>Nenhum lote cadastrado ainda. Crie o primeiro lote para acompanhar seu rebanho.</p><button className="btn" onClick={() => navegar('novoLote')}><Icon nome="novoLote" />Criar primeiro lote</button></EmptyState>}
     {alertas.length > 0 && <section className="home-section alerts-section"><SectionTitle icon="alerta">Precisa de atenção</SectionTitle>{alertas.map((a, i) => <button className="alert alert-row" key={`${a.loteId}-${i}`} onClick={() => navegar('lote', a.loteId)}><Icon nome="alerta" /><span>{a.texto}</span><Icon nome="chev" /></button>)}</section>}
-    <LocalizacaoPropriedade localizacao={localizacao} navegar={navegar} />
     <Clima key={`${localizacao?.latitude},${localizacao?.longitude},${localizacao?.atualizadoEm}`} localizacao={localizacao} navegar={navegar} />
     <section aria-labelledby="chuva-titulo" className="home-section surface rain-section"><SectionTitle id="chuva-titulo" icon="chuva">Chuva na fazenda</SectionTitle>
       <p className="hint">Medições do pluviômetro da propriedade.</p>

@@ -1,8 +1,8 @@
-﻿# Localização da propriedade — 27/09/2026
+# Localização da propriedade — 27/09/2026
 
 ## Fluxo
 
-A Home contém uma área Localização da propriedade. No primeiro uso, o produtor
+A tela Configurações, acessada pela engrenagem da Home, contém a área Localização da propriedade. Veja [Configurações](configuracoes.md). No primeiro uso, o produtor
 pode usar a posição atual do aparelho ou pesquisar uma cidade/localidade. Ambos
 os caminhos levam à confirmação da mesma configuração antes de salvar.
 
@@ -92,7 +92,7 @@ A referência padrão da arroba é resolvida diretamente da UF da propriedade, s
 copiá-la para outro registro. Preferências comerciais antigas são reaproveitadas
 quando a localização legada ainda não permite identificar UF.
 
-A opção secundária Referência da cotação → Alterar somente a UF da cotação permite
+A opção Configurações → Cotação da arroba → Alterar UF comercial permite
 uma exceção comercial explícita. A Home identifica que a UF foi escolhida separadamente.
 Na configuração existe Usar UF da propriedade. Salvar uma nova configuração da
 propriedade também restaura esse padrão — informado no formulário da exceção.
@@ -101,7 +101,7 @@ Se a nova propriedade não tiver UF, não se reutiliza silenciosamente a UF ante
 O registro cotacao:preferencia guarda origem: propriedade (sem copiar UF) ou a
 exceção manual. Caches de cotação continuam separados por UF, com TTL de seis horas,
 controle de concorrência e HTTP 429 existentes. O fallback de preço manual permanece
-em Mais opções quando a fonte está indisponível/offline; a gravação confere a UF
+em Configurações → Cotação da arroba → Mais opções quando a fonte está indisponível/offline; a gravação confere a UF
 efetiva para não salvar um valor numa região que mudou durante o formulário.
 
 ## Validação

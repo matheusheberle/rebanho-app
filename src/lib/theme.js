@@ -47,7 +47,14 @@ export function observarTema(ouvinte) {
 }
 
 export function alternarTema() {
-  preferencia = tema === 'dark' ? 'light' : 'dark';
+  definirTema(tema === 'dark' ? 'light' : 'dark');
+}
+
+export function obterPreferenciaTema() { return preferencia; }
+
+export function definirTema(valor) {
+  if (!['system', 'light', 'dark'].includes(valor)) return;
+  preferencia = valor;
   try {
     localStorage.setItem(CHAVE, preferencia);
   } catch {

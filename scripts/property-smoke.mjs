@@ -1,3 +1,4 @@
+import { abrirConfiguracoes } from './settings-navigation.mjs';
 import assert from 'node:assert/strict';
 
 function instalarLocalizacaoMock() {
@@ -37,6 +38,7 @@ export async function testarPropriedade({ command, evaluate, until, click, fill 
   const fila = await evaluate(`(async () => { const {db}=await import('/src/lib/db.js'); window.__envioLiberado=false;
     await db.configuracoes.delete('localizacao'); await db.configuracoes.put({chave:'cotacao:preferencia',origem:'propriedade'});
     return await db.fila_sync.toArray(); })()`);
+  await abrirConfiguracoes({ evaluate, until, click });
   await until(`document.querySelector('.property-section')?.textContent.includes('Configure a localização da propriedade')`);
   assert.equal(await evaluate('window.__gpsCalls'), 0, 'Não pede GPS ao abrir');
   await click('Usar minha localização');
@@ -46,16 +48,16 @@ export async function testarPropriedade({ command, evaluate, until, click, fill 
   assert.equal(await evaluate('window.__gpsOptions.maximumAge'), 0);
   assert.equal(await evaluate(`(async () => Boolean(await (await import('/src/lib/db.js')).db.configuracoes.get('localizacao')))()`), false, 'Exige confirmar antes de trocar a propriedade');
   await click('Salvar localização');
-  await until(`document.querySelector('.property-section')?.textContent.includes('Cascavel - PR') && document.querySelector('.quote-region')?.textContent.includes('Paraná')`);
+  await until(`document.querySelector('.quote-region')?.textContent.includes('Paraná')`);
   await until(`document.querySelectorAll('.clima-d').length === 6`);
   assert.equal(await evaluate(`(async () => (await (await import('/src/lib/cotacao.js')).lerCotacaoSelecionada()).preferencia.origem)()`), 'propriedade');
   assert.ok((await evaluate('window.__weatherRequests')).some(u => u.includes('latitude=-24.95') && u.includes('longitude=-53.45')));
   await command('Page.reload');
-  await until(`document.querySelector('.property-section')?.textContent.includes('Cascavel - PR')`);
+  await until(`document.querySelector('.location-caption')?.textContent.includes('Cascavel')`);
   assert.equal(await evaluate('window.__gpsCalls'), 0, 'Reabrir mantém a propriedade sem consultar GPS');
   assert.equal(await evaluate('window.__reverseCalls'), 0);
 
-  await click('Atualizar localização'); await click('Escolher manualmente');
+  await abrirConfiguracoes({ evaluate, until, click }); await click('Atualizar localização'); await click('Escolher manualmente');
   await fill('local-busca', 'Dourados'); await click('Buscar localidade');
   await until(`document.querySelector('main .row')?.textContent.includes('Dourados')`);
   await evaluate(`document.querySelector('main .row').click()`);
@@ -68,21 +70,21 @@ export async function testarPropriedade({ command, evaluate, until, click, fill 
   assert.ok((await evaluate('window.__cotacaoChamadas')).includes('MS'));
 
   // Exceção comercial é secundária; retornar à UF da propriedade não copia dados.
-  await evaluate(`document.querySelector('.quote-settings').open=true`); await click('Alterar somente a UF da cotação');
+  await abrirConfiguracoes({ evaluate, until, click }); await click('Alterar UF comercial');
   await until(`Boolean(document.querySelector('#cotacao-uf'))`);
   await escolherUF('cotacao-uf', 'PR'); await click('Salvar região');
   await until(`document.querySelector('.quote-region')?.textContent.includes('Paraná')`);
-  assert.match(await evaluate(`document.querySelector('.property-section').textContent`), /Dourados - MS/);
-  await evaluate(`document.querySelector('.quote-settings').open=true`); await click('Alterar somente a UF da cotação');
+  assert.match(await evaluate(`document.querySelector('.location-caption').textContent`), /Dourados/);
+  await abrirConfiguracoes({ evaluate, until, click }); await click('Alterar UF comercial');
   await until(`Boolean(document.querySelector('#cotacao-uf'))`); await click('Usar UF da propriedade (MS)');
   await until(`document.querySelector('.quote-region')?.textContent.includes('Mato Grosso do Sul')`);
   await evaluate(`Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});window.dispatchEvent(new Event('offline'));`);
   await until(`document.querySelector('.quote-section')?.textContent.includes('Última cotação disponível')`);
   assert.match(await evaluate(`document.querySelector('.quote-price').textContent`), /350,00/);
-  assert.match(await evaluate(`document.querySelector('.property-section').textContent`), /Dourados/);
+  assert.match(await evaluate(`document.querySelector('.location-caption').textContent`), /Dourados/);
   await evaluate(`delete navigator.onLine; window.dispatchEvent(new Event('online'));`);
 
-  await click('Atualizar localização');
+  await abrirConfiguracoes({ evaluate, until, click }); await click('Atualizar localização');
   for (const [code, palavra] of [['1','acessar'],['3','demorou'],['2','indisponível']]) {
     await evaluate(`window.__gpsMode='${code}'`);
     await click(code === '1' ? 'Usar minha localização' : 'Tentar novamente');
@@ -96,7 +98,7 @@ export async function testarPropriedade({ command, evaluate, until, click, fill 
   await escolherUF('local-uf', 'PR'); await fill('local-municipio', 'Cascavel');
   await evaluate(`Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});window.dispatchEvent(new Event('offline'));`);
   await click('Salvar localização');
-  await until(`document.querySelector('.property-section')?.textContent.includes('Cascavel - PR') && document.querySelector('.quote-region')?.textContent.includes('Paraná')`);
+  await until(`document.querySelector('.quote-region')?.textContent.includes('Paraná')`);
   assert.equal(await evaluate(`document.querySelectorAll('.clima-d').length`), 0, 'Alteração offline não reaproveita previsão da outra cidade ou cache anterior da posição');
   assert.match(await evaluate(`document.querySelector('.quote-price').textContent`), /367,00/, 'Cache separado por UF');
   await evaluate(`delete navigator.onLine; window.__reverseMode='ok'; window.dispatchEvent(new Event('online'));`);
@@ -113,12 +115,12 @@ export async function testarPropriedade({ command, evaluate, until, click, fill 
   })()`);
   assert.deepEqual(protecoes, { invalidas:true, legado:true, ambiguo:true });
   // Sair antes do retorno do GPS ignora a resposta e não consulta geocoding.
-  await click('Atualizar localização'); await evaluate(`window.__gpsMode='pendente'`);
+  await abrirConfiguracoes({ evaluate, until, click }); await click('Atualizar localização'); await evaluate(`window.__gpsMode='pendente'`);
   await click('Usar minha localização'); await click('Início');
   const antes = await evaluate('window.__reverseCalls');
   await evaluate(`window.__gpsResolve({coords:{latitude:0,longitude:0}})`);
   assert.equal(await evaluate('window.__reverseCalls'), antes);
-  await until(`document.querySelector('.property-section')?.textContent.includes('Cascavel - PR')`);
+  await until(`Boolean(document.querySelector('.location-caption'))`);
   for (const tema of ['light','dark']) {
     await evaluate(`document.documentElement.dataset.theme='${tema}'`);
     await command('Emulation.setDeviceMetricsOverride',{width:320,height:740,deviceScaleFactor:1,mobile:true});

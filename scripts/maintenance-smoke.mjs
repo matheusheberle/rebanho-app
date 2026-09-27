@@ -1,3 +1,4 @@
+import { abrirConfiguracoes } from './settings-navigation.mjs';
 import assert from 'node:assert/strict';
 
 export async function testarManutencao({ evaluate, until, click, fill, command }) {
@@ -95,7 +96,7 @@ export async function testarManutencao({ evaluate, until, click, fill, command }
       window.__gatilhoNome='Lote corrigido ${gatilho}';
       window.__supabaseMock.tabelas.lotes.set(lote.id,{...lote,nome:window.__gatilhoNome,atualizado_em:new Date(Date.parse(lote.atualizado_em)+1000).toISOString()});
     })()`);
-    if (gatilho === 'manual') await click('Sincronizar agora');
+    if (gatilho === 'manual') { await abrirConfiguracoes({ evaluate, until, click }); await click('Sincronizar agora'); }
     else await evaluate(`${gatilho==='visibilitychange'?'document':'window'}.dispatchEvent(new Event('${gatilho}'))`);
     await until(`(async()=>{const {db}=await import('/src/lib/db.js'); return (await db.lotes.toArray()).some(l=>l.nome===window.__gatilhoNome);})()`);
   }
